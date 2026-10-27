@@ -276,6 +276,11 @@ Resolver na etapa indicada, registrar a decisão aqui e **perguntar ao autor ant
 - Issues: todo TODO no código precisa de uma issue associada (referenciar `#número`)
 - O repositório precisa de `LICENSE` antes do lançamento (etapa 14)
 
+## Documentação (`docs/`)
+
+- Manter `docs/` atualizado a cada etapa, em **português (pt-BR)**: `registro-de-acoes.md` (diário do que foi feito, com hashes dos commits e o que **não** foi verificado), `decisoes.md` (decisão + motivo + alternativa descartada) e `arquitetura.md` (estado atual das pastas)
+- Atualizar a documentação no mesmo commit ou logo após a mudança que a motivou; nunca registrar algo que não foi feito ou testado
+
 ## Padrões de código
 
 - Type hints em tudo; `mypy` e `ruff` limpos antes de commitar
