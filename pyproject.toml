@@ -1,0 +1,40 @@
+[project]
+name = "crypto-analyzer"
+version = "0.1.0"
+description = "Simple crypto analysis (BTC, ETH, SOL in BRL) backed by a bronze/silver/gold data pipeline"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.0",
+    "pandas-stubs>=3.0.5.260914",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.3",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/crypto_analyzer"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = ["integration: needs the Postgres from docker compose"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "PD"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src"]
