@@ -296,7 +296,7 @@ Resolver na etapa indicada, registrar a decisão aqui e **perguntar ao autor ant
 - Teste junto com cada funcionalidade
 - Commits no estilo Conventional Commits (`feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`)
 - Sem código morto, sem TODO solto sem issue associada
-- Docstrings curtas só onde o "porquê" não é óbvio
+- Comentários e docstrings em **português**, curtos e só onde o "porquê" não é óbvio (nomes de código continuam em inglês)
 
 ## Como trabalhar com o autor
 
@@ -304,7 +304,8 @@ Resolver na etapa indicada, registrar a decisão aqui e **perguntar ao autor ant
 - **Explique brevemente decisões não óbvias** (por que esta função do pandas, por que este operador do Airflow) em vez de só despejar código
 - Trabalhe em **passos pequenos**, com commits pequenos e frequentes. O histórico do GitHub faz parte do portfólio
 - Se algo estiver ambíguo, **pergunte antes de assumir**
-- Conversar em **português (pt-BR)**. Código, nomes, comentários e commits em **inglês**
+- Conversar em **português (pt-BR)**. Código, nomes de variáveis/funções e commits em **inglês**; **comentários e docstrings em português (pt-BR)**
+- **No final de cada resposta**, incluir uma seção curta "O que mudou" explicando em **linguagem simples** (sem jargão, como se fosse para um iniciante) o que foi alterado e **em quais arquivos**, um item por arquivo ou grupo de arquivos. Se nada foi alterado, dizer isso
 - **Nunca invente resultados, benchmarks ou números.** Qualquer métrica que vá para o README deve vir de medição ou execução real
 
 ## Comandos úteis
