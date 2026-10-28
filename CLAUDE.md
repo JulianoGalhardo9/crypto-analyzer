@@ -252,7 +252,8 @@ Simples e proporcional ao tamanho do projeto:
 
 Resolver na etapa indicada, registrar a decisão aqui e **perguntar ao autor antes de assumir**:
 
-- **Definição de "dia":** candle diário em UTC ou em horário de Brasília? "Últimas 24h" é janela móvel ou o candle do dia? (etapa 2, depois de ler a doc da API)
+- **Decidido (2026-10-28): o "dia" é UTC**, igual à API, que entrega candles diários à 00:00 UTC. Todos os timestamps do projeto ficam em UTC; qualquer conversão para o horário de Brasília é só na exibição
+- **"Últimas 24h":** janela móvel ou o candle do dia? (etapa 7, junto do explainer)
 - **Janela do percentil de regime:** expanding ou móvel, e de quantos dias? (etapa 5)
 - **Amostra mínima do backtest:** quantas ocorrências independentes? (etapa 11)
 - **Histerese:** valor de N e da margem (etapa 10)
