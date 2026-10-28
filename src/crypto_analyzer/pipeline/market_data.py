@@ -5,12 +5,12 @@ from typing import Any, Protocol
 
 
 class MarketDataError(Exception):
-    """The market data source failed in a way retries could not fix."""
+    """A fonte de dados falhou de um jeito que novas tentativas não resolvem."""
 
 
 @dataclass(frozen=True)
 class RawCandles:
-    """A candles response exactly as received, plus how it was requested."""
+    """Resposta de candles exatamente como chegou, mais os parâmetros usados na chamada."""
 
     symbol: str
     resolution: str
@@ -20,7 +20,7 @@ class RawCandles:
 
 
 class MarketDataClient(Protocol):
-    """Small seam over the data source so tests can use a fake."""
+    """Interface pequena sobre a fonte de dados, para os testes usarem um fake."""
 
     async def fetch_candles(
         self,

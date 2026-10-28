@@ -12,20 +12,20 @@ from crypto_analyzer import __version__
 from crypto_analyzer.pipeline.market_data import MarketDataError, RawCandles
 
 BASE_URL = "https://api.mercadobitcoin.net/api/v4"
-# The API answers 403 to the default "Python-urllib" User-Agent, so we identify ourselves.
+# A API responde 403 ao User-Agent padrão "Python-urllib", então nos identificamos.
 USER_AGENT = f"crypto-analyzer/{__version__}"
-# Failures worth retrying: rate limited or a temporary server problem.
+# Falhas que valem nova tentativa: limite de requisições ou problema temporário no servidor.
 RETRYABLE_STATUS = frozenset({429, 500, 502, 503, 504})
 
 logger = logging.getLogger(__name__)
 
 
 class MercadoBitcoinClient:
-    """Async client for the public candles endpoint (implements MarketDataClient).
+    """Cliente async do endpoint público de candles (implementa MarketDataClient).
 
-    The API allows 1 request/second, so calls are spaced by `min_interval`.
-    Retryable failures wait `backoff_base * 2**attempt` seconds (or `Retry-After`).
-    `sleep` and `clock` are injectable so tests never really wait.
+    A API permite 1 requisição por segundo, então as chamadas são espaçadas por `min_interval`.
+    Falhas temporárias esperam `backoff_base * 2**tentativa` segundos (ou o `Retry-After`).
+    `sleep` e `clock` são injetáveis para os testes nunca esperarem de verdade.
     """
 
     def __init__(
