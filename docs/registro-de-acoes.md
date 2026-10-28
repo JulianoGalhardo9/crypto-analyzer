@@ -29,7 +29,15 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 ### Documentação
 - Criada a pasta `docs/` com este registro, `decisoes.md` e `arquitetura.md`.
 
+## 2026-10-28
+
+### Docker pelo terminal e fluxo GitHub autorizado
+- `CLAUDE.md`: novas seções **Docker** (o Claude opera o Docker pelo terminal, sem apagar volumes) e autorização permanente para branches, commits, push de branches, PRs e merges, com limites (sem force push, sem mexer em configurações do repositório).
+- `docker compose up -d`: Postgres 16 subiu e ficou `healthy`; `select version()` respondeu `PostgreSQL 16.15`. **Verificado.**
+- Primeiro `git push -u origin main` (o remote estava vazio).
+- `gh` (GitHub CLI) instalado com Homebrew para criar PRs e fazer merges. **Falta autenticar** (`gh auth login`), que é interativo.
+- O CI ainda não foi conferido no GitHub.
+
 ## Pendências abertas
-- Subir o Postgres (`docker compose up -d`) e conferir o status `healthy`.
-- Primeiro `git push -u origin main` (decisão do autor) e conferir o CI.
+- Autenticar o `gh` (`gh auth login`) e conferir o resultado do CI no GitHub.
 - Próxima etapa: **2 — cliente do Mercado Bitcoin + bronze**, começando pela leitura da documentação oficial da API.
