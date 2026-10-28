@@ -38,6 +38,19 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - `gh` (GitHub CLI) instalado com Homebrew para criar PRs e fazer merges. **Falta autenticar** (`gh auth login`), que é interativo.
 - O CI ainda não foi conferido no GitHub.
 
+### Etapa 2 — Cliente do Mercado Bitcoin (em andamento)
+- PR #1 (`docs: authorize PR workflow and Docker via terminal`) mergeado com squash; **CI verde** (27s), primeira execução no GitHub.
+- Lida a especificação OpenAPI oficial (`/docs/swagger.yaml`; a página `/docs` é só um visualizador que a carrega) e **medidos** na API pública os pontos que a documentação não cobre. Resultado em [api-mercado-bitcoin.md](api-mercado-bitcoin.md).
+  - Rate limit documentado: 1 req/s. Sem limite de candles por requisição (medido: 42 mil candles horários de uma vez).
+  - O User-Agent padrão do `urllib` recebe 403; `httpx` funciona.
+  - Histórico diário: BTC desde 2013-06, ETH desde 2018-12, SOL desde 2021-11.
+- Branch `feat/mercado-bitcoin-client`:
+  - `httpx` adicionado como dependência.
+  - `pipeline/market_data.py`: protocolo `MarketDataClient`, `RawCandles` e `MarketDataError`.
+  - `infra/mercado_bitcoin.py`: cliente async com espaçamento de 1 req/s, retry com backoff exponencial (respeita `Retry-After`), User-Agent próprio.
+  - 11 testes unitários com `httpx.MockTransport` e uma resposta real gravada como fixture (`tests/fixtures/candles_sol_brl_1d.json`). Passam localmente; **nenhum teste chama a API real**.
+- **Ainda não feito nesta etapa:** gravar a bronze no Postgres (tabela, SQLAlchemy, Alembic) e coletar o histórico de verdade.
+
 ## Pendências abertas
-- Autenticar o `gh` (`gh auth login`) e conferir o resultado do CI no GitHub.
-- Próxima etapa: **2 — cliente do Mercado Bitcoin + bronze**, começando pela leitura da documentação oficial da API.
+- Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
+- Decisão do "dia": a API entrega candles diários à 00:00 UTC; confirmar com o autor que o projeto fica em UTC.

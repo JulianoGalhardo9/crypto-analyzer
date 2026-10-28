@@ -7,5 +7,6 @@
 | [registro-de-acoes.md](registro-de-acoes.md) | Diário cronológico do que o Claude Code fez no projeto, com os commits correspondentes |
 | [decisoes.md](decisoes.md) | Decisões técnicas e o porquê de cada uma |
 | [arquitetura.md](arquitetura.md) | Estrutura de pastas e responsabilidades, como existe hoje |
+| [api-mercado-bitcoin.md](api-mercado-bitcoin.md) | O que a API do Mercado Bitcoin documenta e o que foi medido (limites, histórico, armadilhas) |
 
 Regra: toda etapa concluída atualiza o registro de ações; toda decisão não óbvia entra em `decisoes.md`; mudanças de estrutura entram em `arquitetura.md`.
