@@ -269,12 +269,21 @@ Resolver na etapa indicada, registrar a decisão aqui e **perguntar ao autor ant
 - Repositório: `https://github.com/JulianoGalhardo9/crypto-analyzer` (remote `origin`, branch principal `main`)
 - Nome oficial do projeto/pacote: `crypto-analyzer` (com "z"). A pasta local `crypto-analyser` tem grafia diferente; não renomear sem o autor pedir
 - Fluxo: uma branch curta por tarefa (`feat/...`, `fix/...`, `docs/...`), Pull Request para `main` com CI verde. Não commitar direto na `main` depois que o CI existir
-- **Nunca** dar `git push`, `--force`, criar PR ou alterar o repositório remoto sem o autor pedir naquele momento. Commits locais pequenos são bem-vindos; publicar é decisão do autor
+- **Autorização permanente do autor:** o Claude pode, por conta própria, criar branches, fazer commits, `git push` de branches, abrir PRs e fazer merge deles (via `gh`), seguindo o fluxo acima. Antes do merge: CI verde (quando existir) e `git diff` conferido. Preferir *squash merge* com título em Conventional Commits e apagar a branch depois
+- **Continua proibido sem pedido explícito:** `--force`/`--force-with-lease`, reescrever histórico já publicado, apagar branches ou tags que não sejam as do próprio fluxo, alterar configurações do repositório (proteção de branch, secrets, visibilidade), fechar PRs/issues de terceiros
+- Cada PR descreve o que mudou, por quê e como foi verificado (e o que **não** foi verificado). Registrar o PR em `docs/registro-de-acoes.md`
 - Commits em inglês, Conventional Commits, um assunto por commit
 - Nunca commitar: `.env`, `output/`, dados baixados, credenciais. Conferir `git status` e `git diff --staged` antes de cada commit
 - O histórico faz parte do portfólio: sem commits do tipo "wip" ou "fix fix"; reescrever só em branch local, nunca em histórico já publicado
 - Issues: todo TODO no código precisa de uma issue associada (referenciar `#número`)
 - O repositório precisa de `LICENSE` antes do lançamento (etapa 14)
+
+## Docker
+
+- O Claude opera o Docker **pelo terminal** (`docker compose up -d`, `ps`, `logs`, `down`, `exec`), sem pedir ao autor para rodar os comandos. Se o Docker Desktop estiver fechado, abri-lo com `open -a Docker` e esperar o daemon subir
+- Verificar o resultado (`docker compose ps` com `healthy`, logs) antes de dizer que funcionou
+- **Não apagar volumes nem dados** (`down -v`, `docker volume rm`, `system prune`) sem o autor pedir, porque o histórico coletado tem valor
+- Registrar em `docs/registro-de-acoes.md` o que foi subido e verificado
 
 ## Documentação (`docs/`)
 
