@@ -55,6 +55,15 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - `CLAUDE.md`: comentários e docstrings passam a ser em **português**; nomes de código e commits continuam em inglês. Nova regra: toda resposta termina com a seção "O que mudou", em linguagem simples, citando os arquivos.
 - Comentários e docstrings já existentes traduzidos em `pipeline/market_data.py`, `infra/mercado_bitcoin.py` e `tests/unit/test_mercado_bitcoin_client.py`. Nenhuma lógica foi alterada.
 
+### Etapa 2 — Armazenamento da bronze (PR em andamento)
+- Decisão do autor: o **"dia" é UTC** (registrada no CLAUDE.md).
+- Descoberto: já existe um **Postgres instalado na máquina** (PID 1437) ocupando `localhost:5432`, que "escondia" o do Docker (erro `role "crypto" does not exist`). Solução: o container publica a porta **5433** no computador (continua 5432 por dentro e no CI). O Postgres local não foi tocado; os dados do volume Docker foram mantidos.
+- Dependências: `sqlalchemy`, `psycopg[binary]`, `alembic`, `pydantic-settings`.
+- `config.py` (`Settings` com `DATABASE_URL` do `.env`), `infra/db.py` (engine e sessões), `infra/tables.py` (tabela `bronze_candles_raw`, JSONB), `infra/repositories.py` (`save_raw_candles`).
+- Alembic configurado (`alembic.ini`, `migrations/env.py` lendo a URL do `.env`); migration `0001` gerada, **lida antes de aplicar** e aplicada no Postgres do Docker (`\d bronze_candles_raw` conferido).
+- Testes de integração (`tests/integration/`) gravam e leem a bronze no Postgres real. Total: 13 testes passando localmente. CI passou a definir `DATABASE_URL`.
+- **Ainda não feito:** função de ingestão `pipeline/bronze.py` e a coleta real de BTC, ETH e SOL.
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
-- Decisão do "dia": a API entrega candles diários à 00:00 UTC; confirmar com o autor que o projeto fica em UTC.
+- Próximo PR: `pipeline/bronze.py` (ingestão) e coleta real.
