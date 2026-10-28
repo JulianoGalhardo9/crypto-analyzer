@@ -51,6 +51,10 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
   - 11 testes unitários com `httpx.MockTransport` e uma resposta real gravada como fixture (`tests/fixtures/candles_sol_brl_1d.json`). Passam localmente; **nenhum teste chama a API real**.
 - **Ainda não feito nesta etapa:** gravar a bronze no Postgres (tabela, SQLAlchemy, Alembic) e coletar o histórico de verdade.
 
+### Comentários em português e resumo ao final das respostas
+- `CLAUDE.md`: comentários e docstrings passam a ser em **português**; nomes de código e commits continuam em inglês. Nova regra: toda resposta termina com a seção "O que mudou", em linguagem simples, citando os arquivos.
+- Comentários e docstrings já existentes traduzidos em `pipeline/market_data.py`, `infra/mercado_bitcoin.py` e `tests/unit/test_mercado_bitcoin_client.py`. Nenhuma lógica foi alterada.
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
 - Decisão do "dia": a API entrega candles diários à 00:00 UTC; confirmar com o autor que o projeto fica em UTC.

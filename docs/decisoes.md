@@ -25,6 +25,10 @@ Formato: decisão, motivo e alternativa descartada.
 - **Datas sempre com fuso** — o cliente recusa `datetime` sem timezone, alinhado à regra de UTC do CLAUDE.md.
 - **Fixture real gravada** — o JSON de teste é uma resposta verdadeira da API (3 candles), não inventada.
 
+## Idioma
+
+- **Comentários e docstrings em português; nomes de código e commits em inglês** — o projeto é de estudo e os comentários servem de explicação para o autor; o inglês nos nomes e commits mantém o padrão do mercado e do portfólio.
+
 ## Organização do repositório
 
 - **Saída das planilhas em `output/`** — evita confusão com o pacote `src/crypto_analyzer/reports/`, que é código.

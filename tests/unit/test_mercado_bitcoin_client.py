@@ -15,7 +15,7 @@ TO = datetime(2026, 10, 28, tzinfo=UTC)
 
 
 class Sleeps:
-    """Records requested waits instead of really sleeping."""
+    """Anota as esperas pedidas em vez de dormir de verdade."""
 
     def __init__(self) -> None:
         self.delays: list[float] = []
