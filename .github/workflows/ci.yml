@@ -8,6 +8,8 @@ on:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+psycopg://crypto:crypto@localhost:5432/crypto_analyzer
     services:
       postgres:
         image: postgres:16

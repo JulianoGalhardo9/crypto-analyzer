@@ -25,6 +25,15 @@ Formato: decisão, motivo e alternativa descartada.
 - **Datas sempre com fuso** — o cliente recusa `datetime` sem timezone, alinhado à regra de UTC do CLAUDE.md.
 - **Fixture real gravada** — o JSON de teste é uma resposta verdadeira da API (3 candles), não inventada.
 
+## Banco e bronze
+
+- **Bronze em uma tabela com `payload` JSONB** — guarda a resposta inteira, sem interpretar. Quando a API mudar de formato, o dado antigo continua intacto. Só recebe INSERT (imutável por convenção).
+- **`fetched_at` (do cliente) e `ingested_at` (do Postgres)** — dois momentos distintos: quando recebemos e quando gravamos.
+- **SQLAlchemy síncrono** — o gargalo é a API (1 req/s), não o banco; o cliente HTTP segue async. Alternativa descartada: driver async, que complicaria Alembic e testes sem ganho.
+- **Alembic com a URL vinda do `.env`** — o `alembic.ini` é commitado, então não pode conter credenciais. As migrations autogeradas são lidas antes de aplicar.
+- **Porta 5433 no host** — o Postgres local do autor já usa a 5432. Alternativa descartada: parar o Postgres local (não é nosso para mexer).
+- **`DATABASE_URL` sem valor padrão no código** — obriga a configurar via `.env`/ambiente; o CI define a sua.
+
 ## Idioma
 
 - **Comentários e docstrings em português; nomes de código e commits em inglês** — o projeto é de estudo e os comentários servem de explicação para o autor; o inglês nos nomes e commits mantém o padrão do mercado e do portfólio.

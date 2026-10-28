@@ -5,7 +5,11 @@ description = "Simple crypto analysis (BTC, ETH, SOL in BRL) backed by a bronze/
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "alembic>=1.20.1",
     "httpx>=0.28.1",
+    "psycopg[binary]>=3.3.6",
+    "pydantic-settings>=2.16.2",
+    "sqlalchemy>=2.1.6",
 ]
 
 [dependency-groups]
