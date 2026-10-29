@@ -270,6 +270,7 @@ dependencies = [
 dev = [
     { name = "mypy" },
     { name = "pandas-stubs" },
+    { name = "pandas-ta-classic" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -292,6 +293,7 @@ requires-dist = [
 dev = [
     { name = "mypy", specifier = ">=2.4.0" },
     { name = "pandas-stubs", specifier = ">=3.0.5.260914" },
+    { name = "pandas-ta-classic", specifier = ">=0.9.0" },
     { name = "pytest", specifier = ">=9.2.0" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "ruff", specifier = ">=0.17.3" },
@@ -817,6 +819,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c1/93/8948ae6c1e1e3d6833596fd266f7be2d27c1451b8be094975ad42c5e842e/pandas_stubs-3.0.5.260914.tar.gz", hash = "sha256:3f6fc1f147f68fd89c007105e7c94a948acb4ecd7eb20dc1c02e153c4ed5c250", size = 117622, upload-time = "2026-09-14T16:42:35.065Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9a/cb/5ad79e02a556cc23fed5816de0109fa8af660c66cfa5f4af74c3e8d4cd26/pandas_stubs-3.0.5.260914-py3-none-any.whl", hash = "sha256:39a1300c5c5c55fdf609e3476805decce5d5015539a4dcb683449f8feaeee2fb", size = 177344, upload-time = "2026-09-14T16:42:33.771Z" },
+]
+
+[[package]]
+name = "pandas-ta-classic"
+version = "0.9.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "pandas" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1b/7c/3f0874916661cd4cdf4164db965773e401fe1014c56832dca78c1ce1090b/pandas_ta_classic-0.9.0-py3-none-any.whl", hash = "sha256:f9792bfc478e6ab20dc67008eea748fd5f7042a986f96dbef582b270b706cc57", size = 473768, upload-time = "2026-10-28T14:07:51.467Z" },
 ]
 
 [[package]]
