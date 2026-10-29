@@ -223,7 +223,7 @@ Conceitos que o autor quer praticar: DAG/task, agendamento e `catchup`, retries,
 ## Camadas de dados
 
 - **Bronze:** respostas exatamente como vieram da API, com metadados de coleta (timestamp de ingestão, parâmetros). Imutável
-- **Silver:** candles limpos e padronizados (UTC, tipos corretos, deduplicados, buracos sinalizados, outliers **sinalizados** e nunca removidos em silêncio). A silver só marca; `pipeline/quality.py` decide e reporta o que é problema (buracos, preços absurdos, atrasos) e grava o resultado para a aba `Qualidade`
+- **Silver:** candles limpos e padronizados (UTC, tipos corretos, deduplicados, candle parcial marcado). Nada é removido em silêncio. `pipeline/quality.py` reporta buracos, preços absurdos, atrasos e movimentos extremos (outliers, só informativos: nos dados reais são eventos verdadeiros) e grava o resultado para a aba `Qualidade`
 - Indicadores sobre janelas com candles faltando: não preencher em silêncio; o resultado daquela janela fica nulo ou sinalizado
 - **Gold:** indicadores, volatilidade, regime, correlação com BTC e backtests, prontos para consumo (CLI, bot, planilha)
 
