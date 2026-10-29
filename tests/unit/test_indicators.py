@@ -3,7 +3,17 @@ import pandas as pd
 import pandas_ta_classic as ta
 import pytest
 
-from crypto_analyzer.core.indicators import atr, ema, macd, rsi, sma, true_range
+from crypto_analyzer.core.indicators import (
+    atr,
+    bollinger,
+    ema,
+    log_returns,
+    macd,
+    rolling_correlation,
+    rsi,
+    sma,
+    true_range,
+)
 
 
 @pytest.fixture
@@ -204,3 +214,97 @@ def test_macd_and_atr_only_use_past_values(ohlc: pd.DataFrame) -> None:
 def test_macd_rejects_fast_not_smaller_than_slow(close: pd.Series) -> None:
     with pytest.raises(ValueError, match="fast"):
         macd(close, fast=26, slow=12)
+
+
+# --- Bollinger e correlação ---
+
+
+@pytest.mark.parametrize(("window", "num_std"), [(20, 2.0), (10, 1.5), (50, 3.0)])
+def test_bollinger_matches_reference(close: pd.Series, window: int, num_std: float) -> None:
+    mine = bollinger(close, window, num_std)
+    reference = ta.bbands(close, length=window, std=num_std)
+
+    assert_matches_reference(mine["lower"], reference[f"BBL_{window}_{num_std}"])
+    assert_matches_reference(mine["middle"], reference[f"BBM_{window}_{num_std}"])
+    assert_matches_reference(mine["upper"], reference[f"BBU_{window}_{num_std}"])
+
+
+def test_bollinger_by_hand_uses_population_deviation() -> None:
+    # janela [1, 2, 3]: média 2; desvio populacional = sqrt(2/3); (o amostral seria 1.0)
+    result = bollinger(pd.Series([1.0, 2.0, 3.0]), window=3, num_std=2.0)
+
+    assert result["middle"].iloc[2] == pytest.approx(2.0)
+    assert result["upper"].iloc[2] == pytest.approx(2.0 + 2 * np.sqrt(2 / 3))
+    assert result["lower"].iloc[2] == pytest.approx(2.0 - 2 * np.sqrt(2 / 3))
+
+
+def test_bollinger_bands_are_ordered_and_collapse_when_price_is_constant(
+    close: pd.Series,
+) -> None:
+    bands = bollinger(close).dropna()
+    assert (bands["lower"] <= bands["middle"]).all()
+    assert (bands["middle"] <= bands["upper"]).all()
+
+    flat = bollinger(pd.Series([7.0] * 30)).dropna()
+    assert (flat["upper"] == flat["lower"]).all()
+
+
+def test_log_returns_by_hand() -> None:
+    result = log_returns(pd.Series([100.0, 110.0, 99.0]))
+
+    assert np.isnan(result.iloc[0])
+    assert result.iloc[1] == pytest.approx(np.log(1.1))
+    assert result.iloc[2] == pytest.approx(np.log(0.9))
+
+
+def test_rolling_correlation_matches_numpy_on_every_window(close: pd.Series) -> None:
+    rng = np.random.default_rng(1)
+    a = log_returns(close).dropna()
+    b = a * 0.5 + pd.Series(rng.normal(0, 0.02, len(a)), index=a.index)
+
+    result = rolling_correlation(a, b, window=30)
+
+    expected = [
+        np.corrcoef(a.iloc[i - 29 : i + 1], b.iloc[i - 29 : i + 1])[0, 1] for i in range(29, len(a))
+    ]
+    assert result.isna().sum() == 29
+    assert result.dropna().to_numpy() == pytest.approx(expected, abs=1e-9)
+
+
+def test_correlation_is_plus_one_for_same_moves_and_minus_one_for_opposite(
+    close: pd.Series,
+) -> None:
+    r = log_returns(close).dropna()
+
+    assert rolling_correlation(r, r * 3, 20).dropna().to_numpy() == pytest.approx(1.0)
+    assert rolling_correlation(r, -r, 20).dropna().to_numpy() == pytest.approx(-1.0)
+
+
+def test_correlation_only_counts_dates_both_series_have() -> None:
+    index = pd.date_range("2026-01-01", periods=60, freq="D", tz="UTC")
+    rng = np.random.default_rng(3)
+    btc = pd.Series(rng.normal(0, 0.02, 60), index=index)
+    sol = btc.iloc[30:] * 2  # começou 30 dias depois
+
+    result = rolling_correlation(sol, btc, window=10)
+
+    assert result.index[0] == index[30]  # só existe onde as duas têm dado
+    assert result.isna().sum() == 9
+    assert result.dropna().to_numpy() == pytest.approx(1.0)
+
+
+def test_bollinger_and_correlation_only_use_past_values(close: pd.Series) -> None:
+    altered = close.copy()
+    altered.iloc[200:] = altered.iloc[200:] * 2
+    other = close.shift(1).bfill() * 1.01
+
+    pd.testing.assert_frame_equal(bollinger(close).iloc[:200], bollinger(altered).iloc[:200])
+    pd.testing.assert_series_equal(
+        rolling_correlation(log_returns(close), log_returns(other), 30).iloc[:200],
+        rolling_correlation(log_returns(altered), log_returns(other), 30).iloc[:200],
+    )
+
+
+def test_correlation_needs_a_window_of_at_least_two() -> None:
+    with pytest.raises(ValueError, match="window"):
+        rolling_correlation(pd.Series([1.0, 2.0]), pd.Series([1.0, 2.0]), window=1)
