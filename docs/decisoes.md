@@ -58,6 +58,10 @@ Formato: decisão, motivo e alternativa descartada.
 - **Sem loops** — a semente (SMA) é colocada na posição N e o `ewm` do pandas segue a recursão; fica vetorizado.
 - **NaN no aquecimento, nunca preenchido** — os primeiros `window - 1` valores não existem; inventar um número seria fingir precisão.
 - **RSI com preço parado é NaN; só altas dá exatamente 100** — consequência natural da fórmula, documentada e testada.
+- **True range do primeiro candle é NaN** — sem fechamento anterior não dá para medir o salto. Convenção da TA-Lib e do gabarito; evita um primeiro valor que seria inconsistente com os demais. O ATR começa no candle `window` (igual ao RSI).
+- **MACD devolve um DataFrame (`macd`, `signal`, `histogram`)** — as três séries nascem juntas e compartilham o mesmo índice; mais simples de persistir e de colocar na planilha.
+- **O sinal do MACD também é semeado com a SMA** — mesma convenção das outras médias; assim bate com o gabarito.
+- **Validação também em dados reais** — além dos testes sintéticos, comparei com o gabarito nos candles reais dos 3 ativos (diferença máxima ~5e-10).
 - **Teste de "sem look-ahead"** — alterar valores futuros não pode mudar os indicadores já calculados.
 
 ## Idioma

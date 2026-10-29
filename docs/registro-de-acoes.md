@@ -115,6 +115,13 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - 21 testes novos: comparação com o gabarito (tolerância 1e-9, várias janelas), valores calculados à mão, propriedades (RSI sempre entre 0 e 100; 100 só com altas; NaN com preço parado), série curta e **ausência de look-ahead** (alterar o futuro não muda o que já foi calculado). Total: 55 testes.
 - **Ainda não feito:** MACD, ATR, Bollinger e correlação (próximos PRs da etapa 4); persistência dos indicadores é da etapa 6.
 
+### Etapa 4 — Indicadores, PR 2: MACD e ATR
+- `core/indicators.py`: `macd` (colunas `macd`, `signal`, `histogram`), `true_range` e `atr` (Wilder), puras e sem loops.
+- **Medido antes de escrever:** o MACD com EMAs semeadas por SMA já batia com o gabarito (diferença ~1e-14). No ATR havia diferença de ~0,03: o gabarito deixa o *true range* do **primeiro candle vazio** (não há fechamento anterior), e o ATR começa um candle depois. Adotei isso (mesma convenção da TA-Lib) em vez de usar `máxima - mínima` no primeiro candle.
+- 13 testes novos (total 68): comparação com o gabarito em várias janelas, true range e ATR calculados à mão (incluindo um gap de alta), aquecimento do MACD (25 e 33 NaN), histograma = macd - signal, MACD zero com preço constante e positivo em tendência de alta, ATR nunca negativo e sem look-ahead. Um teste meu falhou por usar `.all()` num DataFrame; corrigido.
+- **Validação em dados reais (só leitura, candles fechados da silver, 1d):** comparei SMA(200), EMA(50), RSI(14), MACD e ATR(14) com o gabarito em BTC (4.887 candles), ETH (2.878) e SOL (1.795). Diferença máxima: 0 em SMA, EMA e ATR; ≤ 2,8e-14 no RSI; ≤ 4,7e-10 no MACD (em preços de até R$ 435 mil).
+- **Ainda não feito:** Bandas de Bollinger e correlação com o BTC (próximo PR). Os indicadores continuam sem persistência (etapa 6).
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
-- Etapa 4, PRs seguintes: MACD e ATR; depois Bollinger e correlação com o BTC.
+- Etapa 4, último PR: Bandas de Bollinger e correlação com o BTC.

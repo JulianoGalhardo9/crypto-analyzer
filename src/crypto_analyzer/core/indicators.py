@@ -34,6 +34,49 @@ def rsi(close: pd.Series, window: int = 14) -> pd.Series:
     return (100 - 100 / (1 + avg_gain / avg_loss)).rename(f"rsi_{window}")
 
 
+def macd(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
+    """MACD: diferença entre uma EMA rápida e uma lenta, mostrando a "força" da tendência.
+
+    Colunas: `macd` (rápida - lenta), `signal` (EMA do próprio macd, mais suave) e
+    `histogram` (macd - signal; positivo quando o macd está acima da sua média).
+    """
+    _check_window(fast)
+    _check_window(signal)
+    if fast >= slow:
+        raise ValueError("fast deve ser menor que slow")
+    macd_line = ema(close, fast) - ema(close, slow)
+    signal_line = _seeded_ewm(macd_line, alpha=2 / (signal + 1), window=signal)
+    return pd.DataFrame(
+        {"macd": macd_line, "signal": signal_line, "histogram": macd_line - signal_line}
+    )
+
+
+def true_range(high: pd.Series, low: pd.Series, close: pd.Series) -> pd.Series:
+    """Maior distância percorrida no candle, contando o salto (gap) desde o fechamento anterior.
+
+    É o maior entre: máxima - mínima, |máxima - fechamento anterior| e |mínima - fechamento
+    anterior|. O primeiro candle fica NaN, pois não há fechamento anterior (mesma convenção
+    da TA-Lib e do gabarito).
+    """
+    previous_close = close.shift(1)
+    ranges = pd.concat(
+        [high - low, (high - previous_close).abs(), (low - previous_close).abs()], axis=1
+    )
+    # skipna=False: se faltar o fechamento anterior, o resultado é NaN em vez de só high - low.
+    return ranges.max(axis=1, skipna=False).rename("true_range")
+
+
+def atr(high: pd.Series, low: pd.Series, close: pd.Series, window: int = 14) -> pd.Series:
+    """ATR de Wilder: média suavizada do true range, em unidades de preço (R$).
+
+    Diz quanto o preço costuma oscilar por candle; maior ATR = mercado mais agitado.
+    """
+    _check_window(window)
+    return _seeded_ewm(true_range(high, low, close), alpha=1 / window, window=window).rename(
+        f"atr_{window}"
+    )
+
+
 def _seeded_ewm(values: pd.Series, alpha: float, window: int) -> pd.Series:
     """Média exponencial que começa com a SMA dos primeiros `window` valores válidos.
 
