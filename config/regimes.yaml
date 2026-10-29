@@ -1,0 +1,12 @@
+# Regimes de volatilidade (ver docs/decisoes.md; valores escolhidos medindo os dados reais).
+# Volatilidade realizada = desvio padrão dos retornos diários nesta janela (dias).
+volatility_window: 30
+# O percentil compara a volatilidade de hoje com os últimos N dias do próprio ativo.
+percentile_window: 365
+# Abaixo disto de valores de volatilidade no histórico, não há conclusão confiável.
+min_history: 180
+# Cortes de percentil: até calm_below = calma; acima de high_above = alta; no meio = normal.
+calm_below: 33
+high_above: 66
+# O regime só muda depois de N dias seguidos no regime novo (evita alertas na fronteira).
+confirm_days: 5
