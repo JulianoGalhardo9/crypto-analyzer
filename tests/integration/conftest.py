@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from crypto_analyzer.config import Settings
 from crypto_analyzer.infra.db import make_engine
-from crypto_analyzer.infra.tables import BronzeCandlesRaw
+from crypto_analyzer.infra.tables import BronzeCandlesRaw, QualityIssueRow, SilverCandle
 
 ROOT = Path(__file__).parent.parent.parent
 
@@ -44,8 +44,11 @@ def engine() -> Iterator[Engine]:
 
 @pytest.fixture
 def session(engine: Engine) -> Iterator[Session]:
-    """Sessão com a bronze de teste limpa, para cada teste começar do zero."""
+    """Sessão com todas as tabelas de teste limpas, para cada teste começar do zero."""
     with Session(engine, expire_on_commit=False) as session:
+        # A silver referencia a bronze (chave estrangeira), então se apaga primeiro.
+        session.execute(delete(SilverCandle))
+        session.execute(delete(QualityIssueRow))
         session.execute(delete(BronzeCandlesRaw))
         session.commit()
         yield session
