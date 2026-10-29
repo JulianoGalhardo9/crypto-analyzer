@@ -7,7 +7,7 @@ src/crypto_analyzer/
   __init__.py        # __version__
   config.py          # Settings (DATABASE_URL via .env)
   core/              # funções puras: indicadores, regime, backtest, explainer
-    indicators.py    # sma, ema, rsi (macd, atr, bollinger e correlação virão)
+    indicators.py    # sma, ema, rsi, macd, true_range, atr (bollinger e correlação virão)
   pipeline/          # bronze -> silver -> gold, qualidade
     bronze.py        # ingest_candles: API -> bronze
     process.py       # process_silver: bronze -> silver + qualidade (orquestra)
