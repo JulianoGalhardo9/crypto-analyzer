@@ -90,6 +90,24 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - Outliers (limite 10): BTC 13, ETH 2, SOL 1. **São eventos reais** (ETH -38,8% em 2020-03-12; SOL -42,4% em 2022-11-09; BTC com oscilações de 20% a 49% em 2013), por isso a severidade é `info` e nenhum candle é removido.
 - **Ainda não feito (PR B):** tabelas `silver_candles` e `quality_issues`, migration, gravação no banco e comando de CLI.
 
+### Etapa 3 — Silver e qualidade, PR B: persistência e execução real
+- Migration `0002` (gerada, **lida antes de aplicar** e aplicada): `silver_candles` (PK `symbol, resolution, ts`; preços `Numeric(24,8)`; FK para a bronze) e `quality_issues`.
+- `infra/repositories.py`: `load_bronze_responses`, `upsert_silver_candles` (`INSERT ... ON CONFLICT DO UPDATE`) e `replace_quality_issues`.
+- `pipeline/process.py`: `process_silver`, uma transação por par.
+- CLI: `crypto-analyzer processar`.
+- 34 testes passando (4 de integração novos: gravação com decimais exatos, idempotência, atualização do candle aberto por uma coleta mais nova, par sem dados).
+- **Execução real (2026-10-29), medida no banco:**
+
+| Par | Candles na silver | Parciais | Avisos (outlier, `info`) |
+|---|---|---|---|
+| BTC-BRL | 4.888 | 1 | 13 |
+| ETH-BRL | 2.879 | 1 | 2 |
+| SOL-BRL | 1.796 | 1 | 1 |
+
+- **Idempotência verificada:** rodei `processar` duas vezes; o total ficou em 9.563 candles e 16 avisos nas duas.
+- Nenhum buraco, preço inválido ou dado velho nos dados reais.
+- **Etapa 3 concluída.** Ainda não feito: candles horários (não coletados) e a etapa 4 (indicadores).
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
-- Etapa 3, PR B: persistir silver e qualidade no Postgres e rodar sobre os dados reais.
+- Etapa 4: indicadores (médias, RSI, MACD, ATR, Bollinger, correlação) como funções puras, validadas contra `pandas-ta` (só como oráculo nos testes).

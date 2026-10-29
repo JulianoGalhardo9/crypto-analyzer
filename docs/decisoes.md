@@ -45,6 +45,10 @@ Formato: decisão, motivo e alternativa descartada.
 - **Outlier é `info`, nunca motivo de remoção** — medido nos dados reais: os "outliers" são crashes e picos verdadeiros. Apagar seria falsificar o histórico.
 - **Retornos que atravessam um buraco não entram na checagem** — não são de um único passo, então não são comparáveis.
 - **Parâmetros em `config/quality.yaml`** — limite de outlier e idade máxima por resolução, nunca fixos no código.
+- **Upsert com chave composta (par, resolução, ts)** — o `ON CONFLICT DO UPDATE` do Postgres torna o reprocessamento seguro (backfill e retry do Airflow); o `updated_at` mostra quando cada candle foi tocado pela última vez.
+- **Preços como `Numeric(24,8)`, não `float`** — a API entrega 8 casas decimais; `float` no banco acumularia erros de arredondamento. No pandas usamos `float64`, que basta para os indicadores.
+- **Problemas de qualidade são reescritos a cada processamento do par** — o resultado reflete o estado atual da silver, sem acumular histórico de avisos repetidos.
+- **Uma transação por par** — falha no ETH não desfaz o BTC.
 - **Silver só padroniza; quem sinaliza problemas é `quality.py`** — ajuste em relação ao texto original do CLAUDE.md, que falava em "outliers tratados" na silver.
 
 ## Idioma

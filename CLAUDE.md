@@ -318,6 +318,8 @@ uv run alembic upgrade head               # migrations
 uv run pytest                             # testes
 uv run ruff check . && uv run ruff format --check .
 uv run mypy src
+uv run crypto-analyzer coletar            # API -> bronze (histórico completo)
+uv run crypto-analyzer processar          # bronze -> silver + qualidade
 uv run crypto-analyzer analisar SOL
 uv run crypto-analyzer analisar SOL --detalhes
 uv run crypto-analyzer planilha           # gera o .xlsx em output/
