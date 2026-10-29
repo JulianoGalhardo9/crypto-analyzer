@@ -231,7 +231,7 @@ Conceitos que o autor quer praticar: DAG/task, agendamento e `catchup`, retries,
 
 Simples e proporcional ao tamanho do projeto:
 - `dim_ativo`
-- `fact_candle`, `fact_indicador`, `fact_regime`, `fact_backtest`
+- `fact_candle` (é a `silver_candles`, sem duplicar), `fact_indicador`, `fact_regime`, `fact_backtest` (etapa 11)
 
 ## Volatilidade e regimes
 
@@ -319,6 +319,7 @@ uv run ruff check . && uv run ruff format --check .
 uv run mypy src
 uv run crypto-analyzer coletar            # API -> bronze (histórico completo)
 uv run crypto-analyzer processar          # bronze -> silver + qualidade
+uv run crypto-analyzer calcular           # silver -> gold (indicadores e regimes)
 uv run crypto-analyzer analisar SOL
 uv run crypto-analyzer analisar SOL --detalhes
 uv run crypto-analyzer planilha           # gera o .xlsx em output/

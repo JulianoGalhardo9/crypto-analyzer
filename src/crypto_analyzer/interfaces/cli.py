@@ -4,11 +4,12 @@ from datetime import UTC, datetime
 
 import typer
 
-from crypto_analyzer.config import Settings, load_assets, load_quality_config
+from crypto_analyzer.config import Settings, load_assets, load_quality_config, load_regime_config
 from crypto_analyzer.infra.db import make_engine, make_session_factory
 from crypto_analyzer.infra.mercado_bitcoin import MercadoBitcoinClient
 from crypto_analyzer.pipeline.bronze import ingest_candles
 from crypto_analyzer.pipeline.process import process_silver
+from crypto_analyzer.pipeline.process_gold import process_gold
 
 app = typer.Typer(help="Análise simples de BTC, ETH e SOL.", no_args_is_help=True)
 
@@ -69,4 +70,21 @@ def processar(
         typer.echo(
             f"{summary.symbol}: {summary.candles} candles "
             f"({summary.partial} parcial) | problemas: {issues}"
+        )
+
+
+@app.command()
+def calcular() -> None:
+    """Calcula indicadores e regimes (gold) a partir da silver e grava no banco."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    session_factory = make_session_factory(make_engine(Settings().database_url))  # type: ignore[call-arg]
+    try:
+        summaries = process_gold(session_factory, load_assets(), load_regime_config())
+    except ValueError as error:
+        raise typer.BadParameter(str(error)) from error
+    for summary in summaries:
+        typer.echo(
+            f"{summary.symbol}: {summary.days} dias | "
+            f"{summary.indicator_rows_with_data} com média de 200 dias | "
+            f"regime atual: {summary.latest_regime or 'sem histórico suficiente'}"
         )

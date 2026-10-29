@@ -10,7 +10,14 @@ from sqlalchemy.orm import Session
 
 from crypto_analyzer.config import Settings
 from crypto_analyzer.infra.db import make_engine
-from crypto_analyzer.infra.tables import BronzeCandlesRaw, QualityIssueRow, SilverCandle
+from crypto_analyzer.infra.tables import (
+    BronzeCandlesRaw,
+    DimAtivo,
+    FactIndicador,
+    FactRegime,
+    QualityIssueRow,
+    SilverCandle,
+)
 
 ROOT = Path(__file__).parent.parent.parent
 
@@ -46,7 +53,10 @@ def engine() -> Iterator[Engine]:
 def session(engine: Engine) -> Iterator[Session]:
     """Sessão com todas as tabelas de teste limpas, para cada teste começar do zero."""
     with Session(engine, expire_on_commit=False) as session:
-        # A silver referencia a bronze (chave estrangeira), então se apaga primeiro.
+        # Chaves estrangeiras: apaga-se primeiro quem referencia (gold, depois silver).
+        session.execute(delete(FactIndicador))
+        session.execute(delete(FactRegime))
+        session.execute(delete(DimAtivo))
         session.execute(delete(SilverCandle))
         session.execute(delete(QualityIssueRow))
         session.execute(delete(BronzeCandlesRaw))

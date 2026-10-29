@@ -81,6 +81,18 @@ Formato: decisão, motivo e alternativa descartada.
 - **Rótulo é relativo ao próprio histórico** — "calma" significa calma para aquele ativo na janela de 365 dias, não calma em absoluto. O texto ao usuário deve dizer isso (etapa 7).
 - **`Regime` como `StrEnum` em `core/models.py`** — os valores `calm`/`normal`/`high` são os que vão para o banco; a tradução para o português é só na exibição.
 
+## Gold e modelagem
+
+- **`fact_candle` é a `silver_candles`** — criar outra tabela com os mesmos candles só duplicaria dados. A silver já tem a chave `(par, resolução, ts)`.
+- **`fact_indicador` em formato largo** — uma linha por ativo e dia, uma coluna por indicador. É o formato mais simples de consultar em SQL e de virar a aba da planilha. Alternativa descartada: formato longo (uma linha por indicador), que exigiria pivotar sempre.
+- **Parâmetros no nome da coluna (`sma_20`, `rsi_14`, `corr_btc_90`)** — o nome é honesto sobre o que a coluna contém; mudar um parâmetro é uma mudança de esquema (migration), não uma troca silenciosa de significado. Por isso esses parâmetros ficam como constantes em `pipeline/gold.py`, e não em YAML.
+- **Só candles fechados no gold** — o candle parcial de hoje não gera indicador; senão o RSI de "hoje" mudaria a cada coleta.
+- **NaN vira NULL** — aquecimento e "não se aplica" (correlação do BTC com ele mesmo) ficam nulos; nada é preenchido com zero ou valor inventado.
+- **`dim_ativo` populada a partir de `assets.yaml`** — com nome amigável ("Solana") para a resposta e a planilha; o `benchmark` também é configuração.
+- **Chaves por `ativo_id` nas fatos, `symbol` na bronze e na silver** — a dimensão entra onde o dado vira consumo; as camadas de ingestão continuam falando a língua da API.
+- **Upsert compartilhado (`_upsert_frame`)** — silver e gold usam a mesma lógica de `ON CONFLICT DO UPDATE`; o reprocessamento é seguro para backfill e retry.
+- **Tudo em uma transação** — se algo falhar no meio, o gold não fica pela metade.
+
 ## Idioma
 
 - **Comentários e docstrings em português; nomes de código e commits em inglês** — o projeto é de estudo e os comentários servem de explicação para o autor; o inglês nos nomes e commits mantém o padrão do mercado e do portfólio.
