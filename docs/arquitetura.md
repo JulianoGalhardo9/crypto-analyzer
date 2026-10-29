@@ -7,6 +7,8 @@ src/crypto_analyzer/
   __init__.py        # __version__
   config.py          # Settings (DATABASE_URL via .env)
   core/              # funções puras: indicadores, regime, backtest, explainer
+    models.py        # Regime (StrEnum)
+    regime.py        # volatilidade realizada, percentil, classificação, histerese
     indicators.py    # sma, ema, rsi, macd, true_range, atr, bollinger, log_returns, rolling_correlation
   pipeline/          # bronze -> silver -> gold, qualidade
     bronze.py        # ingest_candles: API -> bronze
@@ -23,13 +25,13 @@ src/crypto_analyzer/
   interfaces/        # CLI, bot, API
     cli.py           # `crypto-analyzer coletar` e `processar`
 tests/
-  unit/              # test_package, test_mercado_bitcoin_client, test_silver, test_quality, test_indicators
+  unit/              # test_package, test_mercado_bitcoin_client, test_silver, test_quality, test_indicators, test_regime
   fixtures/          # respostas reais gravadas da API
   conftest.py        # backend asyncio para os testes async
   integration/       # banco real (Postgres do Docker); API sempre simulada
   dags/              # (vazio) integridade das DAGs
 dags/                # (vazio) DAGs do Airflow
-config/              # assets.yaml, quality.yaml (regimes.yaml virá na etapa 5)
+config/              # assets.yaml, quality.yaml, regimes.yaml
 docker/              # (vazio)
 docs/                # esta documentação
 .github/workflows/ci.yml

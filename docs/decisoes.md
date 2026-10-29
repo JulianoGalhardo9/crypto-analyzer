@@ -69,6 +69,18 @@ Formato: decisão, motivo e alternativa descartada.
 - **Rótulos de correlação por percentil, não por corte fixo** — medido: ETH e SOL têm correlação de 90 dias com o BTC sempre alta (mínimos 0,54 e 0,50; medianas 0,82 e 0,74). Um corte fixo diria "anda junto" quase todo dia.
 - **Teste de "sem look-ahead"** — alterar valores futuros não pode mudar os indicadores já calculados.
 
+## Regimes de volatilidade
+
+- **Decisões delegadas pelo autor e tomadas medindo** — as tabelas de medição estão no registro de ações (2026-10-29).
+- **Percentil em janela móvel de 365 dias, não crescente** — a volatilidade das criptos caiu com o tempo; com o histórico inteiro, a SOL ficava 57% do tempo em "calma". A janela móvel deu a distribuição mais equilibrada nos 3 ativos.
+- **Mínimo de 180 valores de volatilidade** — abaixo disso o regime é NaN ("sem histórico suficiente"), alinhado à regra de não fingir precisão.
+- **Volatilidade realizada de 30 dias** — desvio padrão dos retornos logarítmicos diários; reaproveita `log_returns`. Os candles horários não entram agora.
+- **Cortes 33/66 e `<=` na calma** — percentil até 33 é calma, acima de 66 é alta. Os cortes vêm do YAML.
+- **Histerese de 5 dias** — sem ela o regime trocava ~24 vezes por ano (mediana de 5 a 8 dias por regime), ruído demais para alertar; com 5, ~11 trocas por ano. Custo: o sinal chega até 5 dias depois.
+- **Histerese é um laço, não vetorizada** — é uma máquina de estados (hoje depende de ontem). Único laço do núcleo, justificado e testado.
+- **Rótulo é relativo ao próprio histórico** — "calma" significa calma para aquele ativo na janela de 365 dias, não calma em absoluto. O texto ao usuário deve dizer isso (etapa 7).
+- **`Regime` como `StrEnum` em `core/models.py`** — os valores `calm`/`normal`/`high` são os que vão para o banco; a tradução para o português é só na exibição.
+
 ## Idioma
 
 - **Comentários e docstrings em português; nomes de código e commits em inglês** — o projeto é de estudo e os comentários servem de explicação para o autor; o inglês nos nomes e commits mantém o padrão do mercado e do portfólio.

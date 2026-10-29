@@ -133,6 +133,35 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - **Consequência para a etapa 7:** como a correlação com o BTC é quase sempre alta, um corte fixo rotularia quase todo dia igual. O rótulo "anda junto" deve vir de percentil do histórico do próprio ativo (regra do CLAUDE.md), não de um número fixo.
 - **Etapa 4 concluída:** SMA, EMA, RSI, MACD, ATR, Bollinger e correlação. Ainda sem persistência (etapa 6).
 
+### Etapa 5 — Volatilidade e regimes (funções puras e configuração)
+- O autor delegou as decisões pendentes ("faça como achar melhor"); decidi **medindo os dados reais** (só leitura, candles fechados da silver, 1d).
+- **Janela do percentil.** Distribuição calma/normal/alta com cortes 33/66:
+
+| Variante | BTC | ETH | SOL |
+|---|---|---|---|
+| crescente (todo o passado) | 46/34/20 | 41/33/25 | **57**/28/15 |
+| móvel 730 dias | 40/33/27 | 36/30/34 | 46/35/19 |
+| móvel 1095 dias | 42/33/25 | 36/32/32 | 53/32/15 |
+| **móvel 365 dias** | 41/29/31 | 39/29/32 | 41/34/25 |
+
+  O percentil crescente inclina para "calma" (a volatilidade caiu com a maturidade do mercado). A janela de 365 dias é a mais equilibrada e a que menos varia de ano para ano. Escolhida: **365 dias, mínimo de 180 valores**.
+- **Histerese.** Trocas de regime por ano (confirmação de N dias seguidos):
+
+| N | BTC | ETH | SOL | duração mediana de um regime |
+|---|---|---|---|---|
+| 1 (sem histerese) | 22,3 | 24,8 | 24,2 | 5 a 8 dias |
+| 3 | 14,0 | 13,5 | 14,7 | 18 a 20 dias |
+| **5** | 11,9 | 10,0 | 10,8 | 22 a 30 dias |
+| 7 | 10,0 | 8,9 | 10,4 | 28 a 32 dias |
+| 10 | 7,8 | 8,2 | 9,4 | 31 a 37 dias |
+
+  Escolhido **N = 5**: cerca de uma troca por mês por ativo; acima disso o ganho é pequeno e o atraso do sinal cresce.
+- `config/regimes.yaml` (janelas, cortes 33/66, histerese), `RegimeConfig`/`load_regime_config`, `core/models.py` (`Regime`), `core/regime.py`: `realized_volatility`, `volatility_percentile`, `classify`, `apply_hysteresis` e `compute_regimes`.
+- 15 testes novos (total 94): contas à mão, fronteiras, histerese (ruído solto descartado, contagem reinicia ao trocar de candidato), espera pelo histórico mínimo, e **sem look-ahead**.
+- **Erro de teste meu, instrutivo:** assumi que um período calmo seria todo "calma"; mas o percentil é relativo ao histórico, então num mercado igualmente estável os dias se espalham pelos 3 rótulos. Isso é por design e agora está num teste. Em surtos longos o percentil também desce um pouco (97 → 77) mas fica acima do corte de "alta".
+- **Resultado real em 2026-10-28** (config oficial): BTC, ETH e SOL em **calma** (percentis 31, 15 e 18; o BTC está perto da fronteira de 33). Trocas de regime nos últimos 365 dias: BTC 15, ETH 10, SOL 13. Distribuição histórica BTC 41/26/33, ETH 39/28/34, SOL 40/34/25 (calma/normal/alta).
+- **Não feito:** candles horários (a volatilidade usa só os diários; horários ficam para a etapa 10, onde o `intraday_refresh` precisa), frequências de atualização por regime no YAML (também etapa 10, para não ter configuração sem uso) e persistência (etapa 6).
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
-- Etapa 5: volatilidade e regimes (percentil do histórico do próprio ativo, sem look-ahead, com histerese) e coleta dos candles horários.
+- Etapa 6: gold e modelagem (persistir indicadores, regimes e correlação; `dim_ativo`, `fact_*`).

@@ -239,7 +239,7 @@ Simples e proporcional ao tamanho do projeto:
 - Regime por **percentil do histórico do próprio ativo** (ex.: abaixo do percentil 33 = calma, entre 33 e 66 = normal, acima = alta). Cortes em `config/regimes.yaml`
 - Frequências de atualização por regime também em configuração, nunca hardcoded
 - **Sem look-ahead:** o regime de uma data só pode usar dados até aquela data (percentil *expanding* ou em janela móvel). Isso vale para a aba `Regimes`, para o backtest e para a detecção de mudança. O percentil sobre o histórico completo só é válido para descrever o "agora"
-- **Histerese:** um regime só muda após N leituras consecutivas no novo estado, com N e a margem em pontos de percentil definidos em `config/regimes.yaml`
+- **Histerese:** um regime só muda após N dias consecutivos no novo estado, com N definido em `config/regimes.yaml` (decidido: 5 dias)
 
 ## Backtest: regras de honestidade
 
@@ -254,9 +254,8 @@ Resolver na etapa indicada, registrar a decisão aqui e **perguntar ao autor ant
 
 - **Decidido (2026-10-28): o "dia" é UTC**, igual à API, que entrega candles diários à 00:00 UTC. Todos os timestamps do projeto ficam em UTC; qualquer conversão para o horário de Brasília é só na exibição
 - **"Últimas 24h":** janela móvel ou o candle do dia? (etapa 7, junto do explainer)
-- **Janela do percentil de regime:** expanding ou móvel, e de quantos dias? (etapa 5)
+- **Decidido (2026-10-29, delegado ao Claude, medido nos dados reais): percentil em janela móvel de 365 dias** (mínimo de 180 valores), volatilidade realizada de 30 dias, cortes 33/66 e **histerese de 5 dias** (ver `docs/decisoes.md`). O percentil crescente inclinava tudo para "calma" (SOL 57%)
 - **Amostra mínima do backtest:** quantas ocorrências independentes? (etapa 11)
-- **Histerese:** valor de N e da margem (etapa 10)
 - **Frequência do `intraday_refresh`:** compatível com o rate limit da API e com a resolução horária (etapa 10)
 - **Limite de "dado velho"** para o aviso na resposta (etapa 7)
 
