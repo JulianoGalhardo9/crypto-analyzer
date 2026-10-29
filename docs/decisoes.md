@@ -51,6 +51,15 @@ Formato: decisão, motivo e alternativa descartada.
 - **Uma transação por par** — falha no ETH não desfaz o BTC.
 - **Silver só padroniza; quem sinaliza problemas é `quality.py`** — ajuste em relação ao texto original do CLAUDE.md, que falava em "outliers tratados" na silver.
 
+## Indicadores
+
+- **`pandas-ta-classic` como gabarito, não `pandas-ta`** — a original não instala com pandas 3 (conflito de `numpy` via `numba`). O fork é só dependência de desenvolvimento, nunca de runtime, como o CLAUDE.md pede.
+- **Média exponencial semeada com a SMA** — convenção clássica (Wilder, TradingView) e a do gabarito. Começar do primeiro preço dá números diferentes no início que só convergem devagar; medido: diferença de 17 pontos no RSI no começo e 0,03 ainda depois de 100 candles.
+- **Sem loops** — a semente (SMA) é colocada na posição N e o `ewm` do pandas segue a recursão; fica vetorizado.
+- **NaN no aquecimento, nunca preenchido** — os primeiros `window - 1` valores não existem; inventar um número seria fingir precisão.
+- **RSI com preço parado é NaN; só altas dá exatamente 100** — consequência natural da fórmula, documentada e testada.
+- **Teste de "sem look-ahead"** — alterar valores futuros não pode mudar os indicadores já calculados.
+
 ## Idioma
 
 - **Comentários e docstrings em português; nomes de código e commits em inglês** — o projeto é de estudo e os comentários servem de explicação para o autor; o inglês nos nomes e commits mantém o padrão do mercado e do portfólio.

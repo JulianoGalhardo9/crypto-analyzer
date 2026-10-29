@@ -108,6 +108,13 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - Nenhum buraco, preço inválido ou dado velho nos dados reais.
 - **Etapa 3 concluída.** Ainda não feito: candles horários (não coletados) e a etapa 4 (indicadores).
 
+### Etapa 4 — Indicadores, PR 1: médias móveis e RSI
+- `pandas-ta` **não instala**: depende de `numba==0.61.2`, que exige `numpy<2.3`, e o projeto usa pandas 3 (numpy >= 2.3.3). Usei o fork mantido **`pandas-ta-classic`** (0.9.0), só como dependência de desenvolvimento, para ser o gabarito dos testes.
+- `core/indicators.py`: `sma`, `ema` e `rsi` (Wilder) como funções puras sobre `pd.Series`, sem loops.
+- **Medido antes de escrever:** a SMA do pandas bate exatamente com o gabarito; a EMA e o RSI com a semente "primeiro preço" divergiam no começo (diferença de 17 pontos no RSI e ainda 0,03 depois de 100 candles). O gabarito inicia a média com a SMA dos primeiros N valores (convenção clássica de Wilder); adotei a mesma e passou a bater exatamente.
+- 21 testes novos: comparação com o gabarito (tolerância 1e-9, várias janelas), valores calculados à mão, propriedades (RSI sempre entre 0 e 100; 100 só com altas; NaN com preço parado), série curta e **ausência de look-ahead** (alterar o futuro não muda o que já foi calculado). Total: 55 testes.
+- **Ainda não feito:** MACD, ATR, Bollinger e correlação (próximos PRs da etapa 4); persistência dos indicadores é da etapa 6.
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
-- Etapa 4: indicadores (médias, RSI, MACD, ATR, Bollinger, correlação) como funções puras, validadas contra `pandas-ta` (só como oráculo nos testes).
+- Etapa 4, PRs seguintes: MACD e ATR; depois Bollinger e correlação com o BTC.

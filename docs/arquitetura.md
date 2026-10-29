@@ -6,7 +6,8 @@ Descreve o que **existe hoje** no repositório. O desenho completo planejado est
 src/crypto_analyzer/
   __init__.py        # __version__
   config.py          # Settings (DATABASE_URL via .env)
-  core/              # (vazio) funções puras: indicadores, regime, backtest, explainer
+  core/              # funções puras: indicadores, regime, backtest, explainer
+    indicators.py    # sma, ema, rsi (macd, atr, bollinger e correlação virão)
   pipeline/          # bronze -> silver -> gold, qualidade
     bronze.py        # ingest_candles: API -> bronze
     process.py       # process_silver: bronze -> silver + qualidade (orquestra)
@@ -22,7 +23,7 @@ src/crypto_analyzer/
   interfaces/        # CLI, bot, API
     cli.py           # `crypto-analyzer coletar` e `processar`
 tests/
-  unit/              # test_package.py, test_mercado_bitcoin_client.py
+  unit/              # test_package, test_mercado_bitcoin_client, test_silver, test_quality, test_indicators
   fixtures/          # respostas reais gravadas da API
   conftest.py        # backend asyncio para os testes async
   integration/       # banco real (Postgres do Docker); API sempre simulada
