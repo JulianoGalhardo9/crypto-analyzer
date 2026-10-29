@@ -16,14 +16,24 @@ class Settings(BaseSettings):
 ASSETS_PATH = Path(__file__).parents[2] / "config" / "assets.yaml"
 
 
+class AssetInfo(BaseModel):
+    symbol: str
+    name: str
+
+
 class AssetsConfig(BaseModel):
     quote: str
-    assets: list[str]
+    benchmark: str
+    assets: list[AssetInfo]
 
     @property
     def symbols(self) -> list[str]:
         """Pares no formato da API, ex.: `BTC-BRL`."""
-        return [f"{asset}-{self.quote}" for asset in self.assets]
+        return [f"{asset.symbol}-{self.quote}" for asset in self.assets]
+
+    @property
+    def benchmark_symbol(self) -> str:
+        return f"{self.benchmark}-{self.quote}"
 
 
 def load_assets(path: Path = ASSETS_PATH) -> AssetsConfig:

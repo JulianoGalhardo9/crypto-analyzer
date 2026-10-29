@@ -1,6 +1,8 @@
 # Ativos acompanhados na v1 (escopo fechado, ver CLAUDE.md). Cotação em BRL.
 quote: BRL
+# Ativo de referência para a correlação ("anda junto com o BTC?").
+benchmark: BTC
 assets:
-  - BTC
-  - ETH
-  - SOL
+  - {symbol: BTC, name: Bitcoin}
+  - {symbol: ETH, name: Ethereum}
+  - {symbol: SOL, name: Solana}
