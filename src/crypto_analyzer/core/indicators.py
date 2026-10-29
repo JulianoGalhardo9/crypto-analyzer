@@ -4,6 +4,7 @@ Todos descrevem o passado: usam só valores até cada data, nunca valores futuro
 Os primeiros `window - 1` resultados são NaN (ainda não há dados suficientes).
 """
 
+import numpy as np
 import pandas as pd
 
 
@@ -75,6 +76,51 @@ def atr(high: pd.Series, low: pd.Series, close: pd.Series, window: int = 14) -> 
     return _seeded_ewm(true_range(high, low, close), alpha=1 / window, window=window).rename(
         f"atr_{window}"
     )
+
+
+def bollinger(close: pd.Series, window: int = 20, num_std: float = 2.0) -> pd.DataFrame:
+    """Bandas de Bollinger: uma média (`middle`) com faixas `num_std` desvios acima e abaixo.
+
+    Preço perto da faixa de cima = esticado para cima em relação ao normal recente; o mesmo
+    vale para baixo. Colunas: `lower`, `middle`, `upper`.
+    """
+    _check_window(window)
+    middle = close.rolling(window, min_periods=window).mean()
+    # ddof=0 (desvio populacional) é a convenção de Bollinger/TradingView e do gabarito.
+    # O padrão do pandas é ddof=1, que daria bandas ligeiramente mais largas.
+    deviation = close.rolling(window, min_periods=window).std(ddof=0)
+    return pd.DataFrame(
+        {
+            "lower": middle - num_std * deviation,
+            "middle": middle,
+            "upper": middle + num_std * deviation,
+        }
+    )
+
+
+def log_returns(close: pd.Series) -> pd.Series:
+    """Retorno logarítmico de um candle para o seguinte: ln(fechamento / fechamento anterior).
+
+    O primeiro valor é NaN. Se faltarem candles no meio, o retorno cobre mais de um passo.
+    """
+    returns: pd.Series = np.log(close).diff()
+    return returns.rename("log_return")
+
+
+def rolling_correlation(returns: pd.Series, other: pd.Series, window: int) -> pd.Series:
+    """Correlação (de -1 a 1) entre dois retornos nas últimas `window` datas em comum.
+
+    1 = andam juntos; 0 = independentes; -1 = andam em sentidos opostos. Só as datas presentes
+    nas duas séries contam (ex.: a SOL começou depois do BTC), então a janela é de datas
+    em comum e não de dias corridos.
+    """
+    if window < 2:
+        raise ValueError("window deve ser pelo menos 2 para calcular correlação")
+    both = pd.concat([returns, other], axis=1, join="inner")
+    correlation: pd.Series = (
+        both.iloc[:, 0].rolling(window, min_periods=window).corr(both.iloc[:, 1])
+    )
+    return correlation.rename("correlation")
 
 
 def _seeded_ewm(values: pd.Series, alpha: float, window: int) -> pd.Series:
