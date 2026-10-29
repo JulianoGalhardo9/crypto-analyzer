@@ -8,6 +8,7 @@ src/crypto_analyzer/
   config.py          # Settings (DATABASE_URL via .env)
   core/              # (vazio) funções puras: indicadores, regime, backtest, explainer
   pipeline/          # bronze -> silver -> gold, qualidade
+    bronze.py        # ingest_candles: API -> bronze
     market_data.py   # MarketDataClient (Protocol), RawCandles, MarketDataError
   reports/           # (vazio) montagem e escrita da planilha
   infra/             # API do Mercado Bitcoin, banco, Telegram
@@ -15,7 +16,8 @@ src/crypto_analyzer/
     db.py            # engine e sessões SQLAlchemy
     tables.py        # tabelas (hoje: bronze_candles_raw)
     repositories.py  # leitura/escrita (hoje: save_raw_candles)
-  interfaces/        # (vazio) CLI, bot, API
+  interfaces/        # CLI, bot, API
+    cli.py           # `crypto-analyzer coletar`
 tests/
   unit/              # test_package.py, test_mercado_bitcoin_client.py
   fixtures/          # respostas reais gravadas da API
@@ -23,7 +25,7 @@ tests/
   integration/       # banco real (Postgres do Docker); API sempre simulada
   dags/              # (vazio) integridade das DAGs
 dags/                # (vazio) DAGs do Airflow
-config/              # (vazio) assets.yaml, regimes.yaml
+config/              # assets.yaml (regimes.yaml virá na etapa 5)
 docker/              # (vazio)
 docs/                # esta documentação
 .github/workflows/ci.yml
