@@ -122,6 +122,17 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - **Validação em dados reais (só leitura, candles fechados da silver, 1d):** comparei SMA(200), EMA(50), RSI(14), MACD e ATR(14) com o gabarito em BTC (4.887 candles), ETH (2.878) e SOL (1.795). Diferença máxima: 0 em SMA, EMA e ATR; ≤ 2,8e-14 no RSI; ≤ 4,7e-10 no MACD (em preços de até R$ 435 mil).
 - **Ainda não feito:** Bandas de Bollinger e correlação com o BTC (próximo PR). Os indicadores continuam sem persistência (etapa 6).
 
+### Etapa 4 — Indicadores, PR 3: Bollinger e correlação (etapa 4 concluída)
+- `core/indicators.py`: `bollinger` (`lower`, `middle`, `upper`), `log_returns` e `rolling_correlation`.
+- **Medido antes de escrever:** o gabarito usa desvio padrão **populacional** (`ddof=0`, diferença de 1,9e-12); o padrão do pandas é o amostral (`ddof=1`), que erraria em 0,3. Passo `ddof=0` explicitamente.
+- A correlação não tem gabarito na `pandas-ta`; validei contra `numpy.corrcoef` **em cada janela** e com casos conhecidos (+1 para os mesmos movimentos, -1 para opostos, datas em comum, sem look-ahead).
+- 11 testes novos (total 79). O mypy reclamou de `Any` vindo do `np.log` (corrigido com tipo explícito); a primeira hipótese que testei, a de `rolling().corr`, estava errada.
+- **Em dados reais (só leitura, candles fechados da silver, 1d):**
+  - Bollinger(20, 2) vs gabarito: diferença máxima 3,0e-7 (BTC, preços de ~R$ 400 mil), 2,5e-9 (ETH), 8,0e-11 (SOL).
+  - Correlação de 90 dias com o BTC (iguala `numpy` na última janela): ETH, 2.788 pontos, mín 0,54, mediana 0,82, máx 0,95; SOL, 1.705 pontos, mín 0,50, mediana 0,74, máx 0,93.
+- **Consequência para a etapa 7:** como a correlação com o BTC é quase sempre alta, um corte fixo rotularia quase todo dia igual. O rótulo "anda junto" deve vir de percentil do histórico do próprio ativo (regra do CLAUDE.md), não de um número fixo.
+- **Etapa 4 concluída:** SMA, EMA, RSI, MACD, ATR, Bollinger e correlação. Ainda sem persistência (etapa 6).
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
-- Etapa 4, último PR: Bandas de Bollinger e correlação com o BTC.
+- Etapa 5: volatilidade e regimes (percentil do histórico do próprio ativo, sem look-ahead, com histerese) e coleta dos candles horários.

@@ -62,6 +62,11 @@ Formato: decisão, motivo e alternativa descartada.
 - **MACD devolve um DataFrame (`macd`, `signal`, `histogram`)** — as três séries nascem juntas e compartilham o mesmo índice; mais simples de persistir e de colocar na planilha.
 - **O sinal do MACD também é semeado com a SMA** — mesma convenção das outras médias; assim bate com o gabarito.
 - **Validação também em dados reais** — além dos testes sintéticos, comparei com o gabarito nos candles reais dos 3 ativos (diferença máxima ~5e-10).
+- **Bollinger com desvio populacional (`ddof=0`)** — convenção de Bollinger, do TradingView e do gabarito. O padrão do pandas é `ddof=1`; sem passar `ddof=0` as bandas saem mais largas.
+- **Correlação sobre retornos logarítmicos, não sobre preços** — preços de séries em tendência quase sempre parecem correlacionados; os retornos medem se os movimentos coincidem.
+- **Correlação só nas datas em comum** — a janela é de datas presentes nas duas séries (a SOL começou em 2021, o BTC em 2013), e não de dias corridos.
+- **`window` da correlação é obrigatório** — é uma escolha do projeto, não uma convenção do mercado; será definida em configuração.
+- **Rótulos de correlação por percentil, não por corte fixo** — medido: ETH e SOL têm correlação de 90 dias com o BTC sempre alta (mínimos 0,54 e 0,50; medianas 0,82 e 0,74). Um corte fixo diria "anda junto" quase todo dia.
 - **Teste de "sem look-ahead"** — alterar valores futuros não pode mudar os indicadores já calculados.
 
 ## Idioma
