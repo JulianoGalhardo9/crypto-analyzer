@@ -162,6 +162,25 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - **Resultado real em 2026-10-28** (config oficial): BTC, ETH e SOL em **calma** (percentis 31, 15 e 18; o BTC está perto da fronteira de 33). Trocas de regime nos últimos 365 dias: BTC 15, ETH 10, SOL 13. Distribuição histórica BTC 41/26/33, ETH 39/28/34, SOL 40/34/25 (calma/normal/alta).
 - **Não feito:** candles horários (a volatilidade usa só os diários; horários ficam para a etapa 10, onde o `intraday_refresh` precisa), frequências de atualização por regime no YAML (também etapa 10, para não ter configuração sem uso) e persistência (etapa 6).
 
+### Etapa 6 — Gold e modelagem
+- Migration `0003` (gerada, lida antes de aplicar e aplicada): `dim_ativo` (id, símbolo único, base, cotação, nome), `fact_indicador` (14 indicadores, formato largo) e `fact_regime` (volatilidade, percentil, regime cru e com histerese). Chave composta `(ativo_id, ts)` nas duas fatos.
+- `config/assets.yaml` agora tem o nome de cada ativo e o `benchmark` (BTC); `AssetsConfig` ganhou `benchmark_symbol`.
+- `pipeline/gold.py` (puro): `compute_indicators` e `compute_gold`. `pipeline/process_gold.py`: lê os candles fechados da silver, calcula, grava com upsert numa transação. `infra/repositories.py`: o upsert foi extraído para `_upsert_frame` (silver e gold usam o mesmo código); novas `load_closed_candles`, `upsert_ativos`, `upsert_gold`.
+- CLI: `crypto-analyzer calcular`.
+- **Bug pego pelos testes antes de gravar qualquer dado:** `compute_regimes` devolve a coluna `percentile`, mas a tabela usa `volatility_percentile`. Corrigido com um `rename` na montagem do gold. Um segundo teste falhou por erro meu (`between` antes de `dropna`).
+- 103 testes passando (9 novos de integração e unitários para o gold, incluindo: só candles fechados, NaN vira NULL, o BTC não tem correlação consigo mesmo, idempotência e erro claro quando falta a silver).
+- **Execução real (2026-10-29), medida no banco:**
+
+| Par | Dias no gold | Primeiro | Último | Com SMA 200 | Com correlação |
+|---|---|---|---|---|---|
+| BTC-BRL | 4.887 | 2013-06-12 | 2026-10-28 | 4.688 | 0 (é o benchmark) |
+| ETH-BRL | 2.878 | 2018-12-12 | 2026-10-28 | 2.679 | 2.788 |
+| SOL-BRL | 1.795 | 2021-11-29 | 2026-10-28 | 1.596 | 1.705 |
+
+- **Idempotência verificada:** `calcular` rodado 2x; 3 ativos, 9.560 linhas de indicadores e 9.560 de regimes nas duas vezes.
+- **Conferência cruzada** com os scripts independentes das etapas 4 e 5, no último candle fechado (2026-10-28): RSI 60,1 / 51,2 / 51,2, ATR 13.811,46 / 510,82 / 26,45, correlação ETH 0,883 e SOL 0,828, percentis 31 / 15 / 18, regime `calm` nos 3. Tudo igual.
+- **Etapa 6 concluída.** `fact_backtest` fica para a etapa 11. Candles horários seguem não coletados.
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
-- Etapa 6: gold e modelagem (persistir indicadores, regimes e correlação; `dim_ativo`, `fact_*`).
+- Etapa 7: explainer (números -> texto simples) e o comando `analisar` com `--detalhes`.
