@@ -28,3 +28,15 @@ class AssetsConfig(BaseModel):
 
 def load_assets(path: Path = ASSETS_PATH) -> AssetsConfig:
     return AssetsConfig.model_validate(yaml.safe_load(path.read_text()))
+
+
+QUALITY_PATH = Path(__file__).parents[2] / "config" / "quality.yaml"
+
+
+class QualityConfig(BaseModel):
+    outlier_threshold: float
+    max_age_hours: dict[str, float]
+
+
+def load_quality_config(path: Path = QUALITY_PATH) -> QualityConfig:
+    return QualityConfig.model_validate(yaml.safe_load(path.read_text()))

@@ -36,6 +36,17 @@ Formato: decisão, motivo e alternativa descartada.
 - **Commit por par na ingestão** — um erro no ETH não descarta o BTC já gravado; a falha sobe para quem chamou decidir (Airflow fará retry só do que faltou).
 - **`DATABASE_URL` sem valor padrão no código** — obriga a configurar via `.env`/ambiente; o CI define a sua.
 
+## Silver e qualidade
+
+- **Funções puras primeiro, banco depois** — `build_silver` e as checagens recebem e devolvem DataFrames, então são testadas com dados sintéticos, sem Postgres.
+- **Duplicata: vale a resposta mais recente** — o candle do dia corrente chega incompleto numa coleta e completo na seguinte; a nova substitui a antiga. `source_bronze_id` mantém a rastreabilidade.
+- **Candle parcial é marcado, não removido** — `is_partial` deixa quem consome decidir (indicadores devem ignorá-lo).
+- **Outlier por mediana e MAD, não por média e desvio padrão** — o próprio outlier infla o desvio padrão e se esconde; mediana e MAD não são distorcidas por ele.
+- **Outlier é `info`, nunca motivo de remoção** — medido nos dados reais: os "outliers" são crashes e picos verdadeiros. Apagar seria falsificar o histórico.
+- **Retornos que atravessam um buraco não entram na checagem** — não são de um único passo, então não são comparáveis.
+- **Parâmetros em `config/quality.yaml`** — limite de outlier e idade máxima por resolução, nunca fixos no código.
+- **Silver só padroniza; quem sinaliza problemas é `quality.py`** — ajuste em relação ao texto original do CLAUDE.md, que falava em "outliers tratados" na silver.
+
 ## Idioma
 
 - **Comentários e docstrings em português; nomes de código e commits em inglês** — o projeto é de estudo e os comentários servem de explicação para o autor; o inglês nos nomes e commits mantém o padrão do mercado e do portfólio.

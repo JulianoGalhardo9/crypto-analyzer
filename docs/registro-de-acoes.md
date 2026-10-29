@@ -81,6 +81,15 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - 16 testes passando (4 de integração no Postgres de teste). **Candles horários ainda não foram coletados**; fica para quando a etapa de volatilidade precisar.
 - **Ainda não feito:** silver (limpeza), etapa 3.
 
+### Etapa 3 — Silver e qualidade, PR A: funções puras com pandas
+- Dependência: `pandas`. Novo `config/quality.yaml` (limite de outlier e idade máxima do último candle) e `load_quality_config()`.
+- `pipeline/silver.py`: `parse_payload` (listas da API -> DataFrame com índice UTC e `float64`) e `build_silver` (junta várias respostas da bronze; em duplicatas vale a resposta mais recente; marca `is_partial`; guarda `source_bronze_id`).
+- `pipeline/quality.py`: checagens de preço inválido, buracos (agrupados), outliers (mediana + MAD), dado velho e duplicatas.
+- 30 testes passando (26 unitários novos com dados sintéticos).
+- **Rodei as funções nos dados reais da bronze (só leitura), medido em 2026-10-29:** nenhum candle inválido, **nenhum buraco**, **nenhum dado velho**, **1 candle parcial por ativo** (o de hoje), 0 duplicatas (só há uma coleta).
+- Outliers (limite 10): BTC 13, ETH 2, SOL 1. **São eventos reais** (ETH -38,8% em 2020-03-12; SOL -42,4% em 2022-11-09; BTC com oscilações de 20% a 49% em 2013), por isso a severidade é `info` e nenhum candle é removido.
+- **Ainda não feito (PR B):** tabelas `silver_candles` e `quality_issues`, migration, gravação no banco e comando de CLI.
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
-- Etapa 3: silver e qualidade (candle parcial do dia, buracos, outliers, duplicatas).
+- Etapa 3, PR B: persistir silver e qualidade no Postgres e rodar sobre os dados reais.

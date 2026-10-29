@@ -1,0 +1,9 @@
+# Parâmetros das checagens de qualidade (ver docs/decisoes.md).
+# Limite de outlier: quantos "desvios robustos" um retorno pode se afastar da mediana.
+# Medido nos dados reais (1d): com 10, BTC 13, ETH 2 e SOL 1 candles; são eventos reais
+# (crash de 2020, FTX em 2022), então o resultado é informativo e nada é removido.
+outlier_threshold: 10.0
+# Idade máxima do último candle antes de considerarmos a coleta atrasada.
+max_age_hours:
+  1d: 48
+  1h: 3
