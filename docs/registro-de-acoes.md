@@ -64,6 +64,23 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - Testes de integração (`tests/integration/`) gravam e leem a bronze no Postgres real. Total: 13 testes passando localmente. CI passou a definir `DATABASE_URL`.
 - **Ainda não feito:** função de ingestão `pipeline/bronze.py` e a coleta real de BTC, ETH e SOL.
 
+### Etapa 2 — Ingestão da bronze e primeira coleta real
+- `config/assets.yaml` (BTC, ETH, SOL em BRL) e `config.py` com `load_assets()`; dependências `typer` e `pyyaml`.
+- `pipeline/bronze.py`: `ingest_candles` busca cada par e grava a resposta crua; commit por par (se um falhar, o que já foi gravado fica). Chamadas sequenciais por causa do limite de 1 req/s.
+- `interfaces/cli.py`: comando `crypto-analyzer coletar` (`--resolucao 1d|1h`, `--candles`).
+- **Problema encontrado e corrigido:** os testes de integração apagavam a bronze do banco real. Agora usam um banco separado, `crypto_analyzer_test`, criado e migrado automaticamente. Duas linhas de teste (ids 11 e 12) tinham vazado para o banco real antes da correção; confirmei que eram lixo (fixture de 3 candles, `fetched_at` fixo) e as removi.
+- **Coleta real (2026-10-29, 1d, `countback=100000`), medida no banco:**
+
+| Par | Candles | Primeiro | Último | Tamanho do JSON no banco |
+|---|---|---|---|---|
+| BTC-BRL | 4.888 | 2013-06-12 | 2026-10-29 | 188 kB |
+| ETH-BRL | 2.879 | 2018-12-12 | 2026-10-29 | 117 kB |
+| SOL-BRL | 1.796 | 2021-11-29 | 2026-10-29 | 71 kB |
+
+  As 3 chamadas levaram cerca de 3,4 s no total. O último candle de cada par é o do dia corrente (parcial).
+- 16 testes passando (4 de integração no Postgres de teste). **Candles horários ainda não foram coletados**; fica para quando a etapa de volatilidade precisar.
+- **Ainda não feito:** silver (limpeza), etapa 3.
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
-- Próximo PR: `pipeline/bronze.py` (ingestão) e coleta real.
+- Etapa 3: silver e qualidade (candle parcial do dia, buracos, outliers, duplicatas).

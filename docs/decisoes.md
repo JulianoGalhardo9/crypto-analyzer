@@ -32,6 +32,8 @@ Formato: decisão, motivo e alternativa descartada.
 - **SQLAlchemy síncrono** — o gargalo é a API (1 req/s), não o banco; o cliente HTTP segue async. Alternativa descartada: driver async, que complicaria Alembic e testes sem ganho.
 - **Alembic com a URL vinda do `.env`** — o `alembic.ini` é commitado, então não pode conter credenciais. As migrations autogeradas são lidas antes de aplicar.
 - **Porta 5433 no host** — o Postgres local do autor já usa a 5432. Alternativa descartada: parar o Postgres local (não é nosso para mexer).
+- **Testes de integração em banco separado (`<banco>_test`)** — os testes apagam tabelas; no mesmo banco dos dados reais isso destruiria o histórico (e deixou lixo nele uma vez). O banco de teste é criado sozinho pela fixture.
+- **Commit por par na ingestão** — um erro no ETH não descarta o BTC já gravado; a falha sobe para quem chamou decidir (Airflow fará retry só do que faltou).
 - **`DATABASE_URL` sem valor padrão no código** — obriga a configurar via `.env`/ambiente; o CI define a sua.
 
 ## Idioma

@@ -1,0 +1,6 @@
+# Ativos acompanhados na v1 (escopo fechado, ver CLAUDE.md). Cotação em BRL.
+quote: BRL
+assets:
+  - BTC
+  - ETH
+  - SOL
