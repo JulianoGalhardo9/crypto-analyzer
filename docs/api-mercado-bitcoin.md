@@ -35,3 +35,6 @@ SOL horário começa em 2021-11-29 13:00 UTC. A SOL tem cerca de 5 anos de hist�
 - **O último candle é parcial:** o candle do dia corrente ainda está em formação. A silver precisa sinalizá-lo para os indicadores não tratarem como fechado.
 - Valores vêm como **strings**; a conversão para número é feita na silver, e a bronze guarda a resposta crua.
 - Outros endpoints públicos: `/symbols`, `/tickers`, `/{symbol}/orderbook`, `/{symbol}/trades`. Só `/candles` é usado na v1.
+
+## Indisponibilidade observada
+- **2026-11-03:** a API inteira (`/candles` e `/tickers`) respondeu **HTTP 302** para uma página "Mercado Bitcoin - Página indisponível", atrás da Cloudflare. Reproduzido com `curl` puro e com o User-Agent do projeto, então não era problema de cliente nem de User-Agent: a API estava fora do ar ou em manutenção. O cliente não segue redirecionamentos e agora relata isso com uma mensagem clara; nada foi gravado.
