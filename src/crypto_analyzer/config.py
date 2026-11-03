@@ -67,3 +67,14 @@ class RegimeConfig(BaseModel):
 
 def load_regime_config(path: Path = REGIMES_PATH) -> RegimeConfig:
     return RegimeConfig.model_validate(yaml.safe_load(path.read_text()))
+
+
+REPORT_PATH = Path(__file__).parents[2] / "config" / "report.yaml"
+
+
+class ReportConfig(BaseModel):
+    window_days: int
+
+
+def load_report_config(path: Path = REPORT_PATH) -> ReportConfig:
+    return ReportConfig.model_validate(yaml.safe_load(path.read_text()))

@@ -1,0 +1,4 @@
+# Planilha Excel (ver docs/decisoes.md).
+# Quantos dias recentes entram nas abas diárias (Candles, Indicadores, Regimes).
+# Os indicadores são calculados sobre o histórico inteiro; a janela só limita o que é exibido.
+window_days: 365

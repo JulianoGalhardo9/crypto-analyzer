@@ -22,7 +22,8 @@ src/crypto_analyzer/
     silver.py        # parse_payload, build_silver (puro, pandas)
     quality.py       # checagens de qualidade (puro, pandas)
     market_data.py   # MarketDataClient (Protocol), RawCandles, MarketDataError
-  reports/           # (vazio) montagem e escrita da planilha
+  reports/           # montagem e escrita da planilha
+    frames.py        # um DataFrame por aba (puro)
   infra/             # API do Mercado Bitcoin, banco, Telegram
     mercado_bitcoin.py  # cliente httpx async (implementa MarketDataClient)
     db.py            # engine e sessões SQLAlchemy
@@ -31,13 +32,13 @@ src/crypto_analyzer/
   interfaces/        # CLI, bot, API
     cli.py           # `crypto-analyzer coletar`, `processar`, `calcular` e `analisar`
 tests/
-  unit/              # test_package, test_mercado_bitcoin_client, test_silver, test_quality, test_indicators, test_regime, test_gold, test_explainer, test_analysis, test_trend_and_levels, test_cli
+  unit/              # test_package, test_mercado_bitcoin_client, test_silver, test_quality, test_indicators, test_regime, test_gold, test_explainer, test_analysis, test_trend_and_levels, test_cli, test_report_frames
   fixtures/          # respostas reais gravadas da API
   conftest.py        # backend asyncio para os testes async
   integration/       # banco real (Postgres do Docker); API sempre simulada
   dags/              # (vazio) integridade das DAGs
 dags/                # (vazio) DAGs do Airflow
-config/              # assets.yaml (com nomes e benchmark), quality.yaml, regimes.yaml
+config/              # assets.yaml (com nomes e benchmark), quality.yaml, regimes.yaml, report.yaml
 docker/              # (vazio)
 docs/                # esta documentação
 .github/workflows/ci.yml

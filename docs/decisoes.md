@@ -112,6 +112,17 @@ Formato: decisão, motivo e alternativa descartada.
 - **Texto puro, sem formatação de terminal** — o mesmo texto serve para o CLI e, na etapa 12, para o bot do Telegram.
 - **O explainer não calcula nada** — recebe o `Analysis` pronto; os números vêm do pandas, nunca do texto (regra do CLAUDE.md sobre LLM e cálculo vale aqui também).
 
+## Planilha
+
+- **Formato longo (coluna `Ativo` + uma linha por dia)** — é o que permite filtrar, ordenar e criar tabelas dinâmicas. Uma aba por ativo impediria comparar ativos num filtro só.
+- **Janela de 365 dias nas abas diárias, em `config/report.yaml`** — o histórico completo teria ~9.500 linhas por aba e pouca utilidade; os indicadores continuam calculados sobre todo o histórico, então a janela não tem vazios de aquecimento.
+- **Datas sem fuso** — o XlsxWriter/Excel não aceita datas com fuso; escrevo o dia UTC como data comum e a aba Sobre avisa.
+- **Aba `Mudanças` além das listadas no CLAUDE.md** — a lista de datas em que o regime mudou é pedida na aba `Regimes`, mas misturá-la com a série diária quebraria o filtro e as tabelas dinâmicas.
+- **Aba `Backtest` só na etapa 11** — não faria sentido uma aba vazia; o teste de abas a incluirá quando existir.
+- **Cabeçalhos e rótulos em português** — a planilha é para o usuário final, diferente do código.
+- **Valores vazios só onde fazem sentido** — correlação do BTC (é a referência) e datas de verificações que não têm data (ex.: duplicatas). Nenhum "—" em coluna numérica, que a transformaria em texto.
+- **Frames puros, escrita separada** — `frames.py` monta DataFrames testáveis sem Excel; `excel.py` só formata e escreve.
+
 ## Idioma
 
 - **Comentários e docstrings em português; nomes de código e commits em inglês** — o projeto é de estudo e os comentários servem de explicação para o autor; o inglês nos nomes e commits mantém o padrão do mercado e do portfólio.
