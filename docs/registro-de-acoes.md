@@ -203,6 +203,14 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - 213 testes passando (15 novos nesta parte): montagem a partir do banco (candle parcial fora, mas contado na idade do dado), BTC sem correlação, dado velho com "7 dias atrás", erro sem dados, ativo fora do escopo, API fora do ar no CLI, regra do candle parcial, limpeza do gold e concordância de gênero.
 - **Pendente:** atualizar os dados (`coletar`, `processar`, `calcular`) quando a API voltar; o backtest aparece como "ainda não disponível" até a etapa 11.
 
+### Etapa 8 — Planilha Excel, PR A: os DataFrames de cada aba
+- Dependências: `xlsxwriter` (escrita) e `openpyxl` (só dev, para os testes lerem o arquivo). `config/report.yaml` (`window_days: 365`) e `load_report_config()`.
+- `reports/frames.py` (puro): `ReportData` e um construtor por aba: `summary_frame` (Resumo), `candles_frame`, `indicators_frame`, `regimes_frame`, `regime_changes_frame` (Mudanças), `quality_frame` (Qualidade) e `about_frame` (Sobre).
+- **Formato longo** (coluna `Ativo` + uma linha por dia, ordenado por ativo e data) para filtrar, ordenar e criar tabelas dinâmicas. Cabeçalhos e rótulos em português ("Calma", "Subindo"...). Datas são datas de verdade, **sem fuso** (o Excel não aceita fuso; a aba Sobre diz que são dias em UTC).
+- 17 testes novos (total 230): janela de 365 dias por ativo e ordem, datas sem fuso, colunas numéricas como `float64`, só os vazios esperados (correlação do BTC), mudanças de regime calculadas à mão (datas e dias de duração), tradução, resumo com "Sem histórico", Qualidade vazia e Sobre com aviso de dado velho.
+- **Dois erros meus nos testes:** a SOL sintética tinha 500 dias, menos que 365 + 199 do aquecimento da média de 200 dias, o que deixava vazios na janela (os dados reais têm 1.795 dias); e uma asserção terminava em `or True`, que nunca falha. Corrigidos.
+- **Ainda não feito (PR B):** o arquivo `.xlsx` em si (formatação, cores, gráficos), a leitura do banco e o comando `planilha`. A aba `Backtest` entra na etapa 11.
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
 - Quando a API do Mercado Bitcoin voltar: `coletar --candles 30`, `processar` e `calcular` para atualizar os dados (a última coleta é de 29/10).
