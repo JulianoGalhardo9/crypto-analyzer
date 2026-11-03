@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from datetime import datetime
 from typing import Any
 
 import pandas as pd
@@ -111,6 +112,31 @@ def load_closed_candles(session: Session, symbol: str, resolution: str) -> pd.Da
     return frame.set_index("ts").astype("float64")
 
 
+def load_last_candle_ts(session: Session, symbol: str, resolution: str) -> datetime | None:
+    """Início do candle mais recente da silver, inclusive o parcial (mede a idade do dado)."""
+    return session.scalar(
+        select(func.max(SilverCandle.ts)).where(
+            SilverCandle.symbol == symbol, SilverCandle.resolution == resolution
+        )
+    )
+
+
+def load_fact_frame(session: Session, model: type[Base], symbol: str) -> pd.DataFrame:
+    """Uma tabela gold (fact_indicador ou fact_regime) de um par, indexada por `ts` em UTC."""
+    ativo_id = session.scalar(select(DimAtivo.id).where(DimAtivo.symbol == symbol))
+    if ativo_id is None:
+        return pd.DataFrame()
+    columns = [c for c in model.__table__.columns if c.name not in {"ativo_id", "updated_at"}]
+    rows = session.execute(
+        select(*columns)
+        .where(model.__table__.c.ativo_id == ativo_id)
+        .order_by(model.__table__.c.ts)
+    ).all()
+    frame = pd.DataFrame(rows, columns=[c.name for c in columns])
+    frame["ts"] = pd.to_datetime(frame["ts"], utc=True)
+    return frame.set_index("ts")
+
+
 def upsert_ativos(session: Session, assets: AssetsConfig) -> dict[str, int]:
     """Garante um registro em dim_ativo por par e devolve `{par: id}`."""
     rows = [
@@ -137,6 +163,13 @@ def upsert_ativos(session: Session, assets: AssetsConfig) -> dict[str, int]:
 
 
 def upsert_gold(session: Session, ativo_id: int, frames: GoldFrames) -> None:
+    # Um dia que antes contava como fechado pode voltar a ser parcial; o gold não pode
+    # guardar números calculados sobre ele. Só linhas POSTERIORES ao último fechado saem.
+    last_closed = frames.indicators.index.max()
+    for model in (FactIndicador, FactRegime):
+        session.execute(
+            delete(model).where(model.ativo_id == ativo_id, model.ts > last_closed.to_pydatetime())
+        )
     constants = {"ativo_id": ativo_id}
     _upsert_frame(session, FactIndicador, frames.indicators, ["ativo_id", "ts"], constants)
     _upsert_frame(session, FactRegime, frames.regimes, ["ativo_id", "ts"], constants)
