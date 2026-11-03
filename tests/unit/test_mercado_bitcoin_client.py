@@ -181,3 +181,14 @@ async def test_requests_are_spaced_by_min_interval() -> None:
     await client.fetch_candles("SOL-BRL", "1d", to=TO)
 
     assert sleeps.delays == [1.0]
+
+
+async def test_redirect_is_reported_as_the_api_being_down_and_not_retried() -> None:
+    client, seen = make_client(
+        responses=[httpx.Response(302, headers={"Location": "/indisponivel"}, text="<html>")]
+    )
+
+    with pytest.raises(MarketDataError, match="fora do ar ou em manutenção"):
+        await client.fetch_candles("SOL-BRL", "1d", to=TO)
+
+    assert len(seen) == 1
