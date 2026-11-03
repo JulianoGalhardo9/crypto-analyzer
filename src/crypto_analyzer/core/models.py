@@ -34,6 +34,7 @@ class Analysis:
     symbol: str  # par da API, ex.: SOL-BRL
     base: str  # ex.: SOL
     name: str  # ex.: Solana
+    article: str  # "o" ou "a": o BTC, a SOL
     is_benchmark: bool  # True para o BTC (a correlação com ele mesmo não se aplica)
     as_of: datetime  # início do último candle fechado (UTC)
     last_candle_ts: datetime  # início do candle mais recente, inclusive o parcial

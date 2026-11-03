@@ -14,6 +14,7 @@ src/crypto_analyzer/
     indicators.py    # sma, ema, rsi, macd, true_range, atr, bollinger, log_returns, rolling_correlation
   pipeline/          # bronze -> silver -> gold, qualidade
     bronze.py        # ingest_candles: API -> bronze
+    build_analysis.py  # build_analysis: banco -> Analysis
     analysis.py      # assemble_analysis: gold -> Analysis (puro)
     gold.py          # compute_indicators, compute_gold (puro, pandas)
     process_gold.py  # process_gold: silver -> gold (orquestra)
@@ -28,9 +29,9 @@ src/crypto_analyzer/
     tables.py        # bronze, silver, quality_issues, dim_ativo, fact_indicador, fact_regime
     repositories.py  # leitura/escrita (bronze, silver em upsert, qualidade)
   interfaces/        # CLI, bot, API
-    cli.py           # `crypto-analyzer coletar`, `processar` e `calcular`
+    cli.py           # `crypto-analyzer coletar`, `processar`, `calcular` e `analisar`
 tests/
-  unit/              # test_package, test_mercado_bitcoin_client, test_silver, test_quality, test_indicators, test_regime, test_gold, test_explainer, test_analysis, test_trend_and_levels
+  unit/              # test_package, test_mercado_bitcoin_client, test_silver, test_quality, test_indicators, test_regime, test_gold, test_explainer, test_analysis, test_trend_and_levels, test_cli
   fixtures/          # respostas reais gravadas da API
   conftest.py        # backend asyncio para os testes async
   integration/       # banco real (Postgres do Docker); API sempre simulada

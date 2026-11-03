@@ -42,7 +42,7 @@ def process_silver(
     for symbol in symbols:
         with session_factory() as session:
             responses = load_bronze_responses(session, symbol, resolution)
-            silver = build_silver(responses, resolution, now)
+            silver = build_silver(responses, resolution)
             issues = check_quality(
                 silver.frame,
                 resolution,

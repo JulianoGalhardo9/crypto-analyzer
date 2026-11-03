@@ -105,6 +105,10 @@ Formato: decisão, motivo e alternativa descartada.
 - **Cortes 0,7 e 0,4 para a força da correlação** — convenção usual da estatística; é só a palavra ("junto", "parcialmente", "independente"). O que diferencia os dias é o percentil.
 - **Suporte e resistência = mínima e máxima de 30 e 90 dias** — definição simples (canal de Donchian), explicitamente rotulada como "mínima e máxima recentes".
 - **Nenhuma previsão no texto** — o RSI alto diz que "subiu muito rápido", nunca que "vai cair". Há teste para isso.
+- **`is_partial` pela hora da coleta, não do processamento** — um candle é fechado só se a coleta que o trouxe ocorreu depois do fim dele. Pela hora do processamento, reprocessar dias depois "fechava" um retrato incompleto (bug real, 2026-11-03).
+- **O gold apaga linhas posteriores ao último candle fechado** — um dia que antes contava como fechado pode voltar a ser parcial; guardar indicadores dele seria guardar números sobre dado incompleto.
+- **Artigo e concordância por ativo na configuração** — "o BTC, o ETH, a SOL": o gênero não se deduz do nome, então fica em `assets.yaml`.
+- **Erro de API explicado, sem traceback** — falhas esperadas da fonte de dados viram mensagem curta e código de saída 1; o que já estava gravado é mantido.
 - **Texto puro, sem formatação de terminal** — o mesmo texto serve para o CLI e, na etapa 12, para o bot do Telegram.
 - **O explainer não calcula nada** — recebe o `Analysis` pronto; os números vêm do pandas, nunca do texto (regra do CLAUDE.md sobre LLM e cálculo vale aqui também).
 

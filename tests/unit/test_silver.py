@@ -52,9 +52,7 @@ def test_parse_payload_rejects_missing_keys_and_uneven_lists() -> None:
 def test_newest_response_wins_on_duplicated_timestamps() -> None:
     old = response(1, 10, [T0, T0 + DAY], close=10.0)
     new = response(2, 18, [T0 + DAY, T0 + 2 * DAY], close=20.0)
-    now = datetime(2026, 10, 29, 12, tzinfo=UTC)
-
-    result = build_silver([new, old], "1d", now)  # fora de ordem de propósito
+    result = build_silver([new, old], "1d")  # fora de ordem de propósito
 
     assert result.duplicates_removed == 1
     assert list(result.frame["close"]) == [10.0, 20.0, 20.0]
@@ -62,15 +60,42 @@ def test_newest_response_wins_on_duplicated_timestamps() -> None:
     assert result.frame.index.is_monotonic_increasing
 
 
-def test_only_the_candle_still_open_is_partial() -> None:
-    now = datetime(2026, 10, 28, 15, tzinfo=UTC)  # meio do dia 28
-    result = build_silver([response(1, 10, [T0, T0 + DAY, T0 + 2 * DAY], 10.0)], "1d", now)
+def test_only_the_candle_still_open_when_fetched_is_partial() -> None:
+    # coletado às 10h do dia 28: o candle do dia 28 ainda estava em formação
+    result = build_silver([response(1, 10, [T0, T0 + DAY, T0 + 2 * DAY], 10.0)], "1d")
 
     assert list(result.frame["is_partial"]) == [False, False, True]
 
 
+def test_a_candle_fetched_mid_day_stays_partial_no_matter_when_it_is_processed() -> None:
+    # Bug real (2026-11-03): o candle do dia 29 foi coletado às 21h do próprio dia 29 e,
+    # processado dias depois, era marcado como fechado. O que vale é a hora da COLETA.
+    fetched_mid_day = BronzeResponse(
+        1, datetime(2026, 10, 29, 21, tzinfo=UTC), payload([T0 + 3 * DAY], close=10.0)
+    )
+
+    result = build_silver([fetched_mid_day], "1d")
+
+    assert list(result.frame["is_partial"]) == [True]
+
+
+def test_a_later_fetch_completes_a_candle_that_was_partial() -> None:
+    mid_day = BronzeResponse(
+        1, datetime(2026, 10, 29, 21, tzinfo=UTC), payload([T0 + 3 * DAY], close=10.0)
+    )
+    next_day = BronzeResponse(
+        2, datetime(2026, 10, 30, 8, tzinfo=UTC), payload([T0 + 3 * DAY], close=12.0)
+    )
+
+    result = build_silver([mid_day, next_day], "1d")
+
+    assert list(result.frame["is_partial"]) == [False]
+    assert list(result.frame["close"]) == [12.0]
+    assert list(result.frame["source_bronze_id"]) == [2]
+
+
 def test_no_responses_gives_an_empty_typed_frame() -> None:
-    result = build_silver([], "1d", datetime(2026, 10, 28, tzinfo=UTC))
+    result = build_silver([], "1d")
 
     assert result.frame.empty
     assert str(result.frame.index.tz) == "UTC"

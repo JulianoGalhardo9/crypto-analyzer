@@ -53,20 +53,22 @@ def parse_payload(payload: Mapping[str, Any]) -> pd.DataFrame:
     )
 
 
-def build_silver(
-    responses: Sequence[BronzeResponse], resolution: str, now: datetime
-) -> SilverCandles:
+def build_silver(responses: Sequence[BronzeResponse], resolution: str) -> SilverCandles:
     """Junta várias respostas da bronze em um único conjunto limpo de candles.
 
     - o mesmo `ts` pode vir em várias respostas; vale o da resposta mais recente
       (ex.: o candle "de hoje" vem incompleto numa coleta e completo na seguinte);
-    - `is_partial` marca candles que ainda não fecharam em `now`;
+    - `is_partial` marca candles que ainda não tinham fechado QUANDO FORAM COLETADOS. Compara
+      com a hora da coleta que trouxe cada candle, e não com a hora do processamento: um
+      candle coletado às 21h do próprio dia continua parcial mesmo se processado dias depois,
+      até que uma coleta posterior o traga completo;
     - `source_bronze_id` guarda de qual resposta cada candle veio (rastreabilidade).
     """
     parts: list[pd.DataFrame] = []
     for response in sorted(responses, key=lambda r: r.fetched_at):
         part = parse_payload(response.payload)
         part["source_bronze_id"] = response.bronze_id
+        part["fetched_at"] = pd.Timestamp(response.fetched_at)
         parts.append(part)
 
     if not parts:
@@ -76,7 +78,8 @@ def build_silver(
     # keep="last": como as respostas estão em ordem cronológica, a mais nova ganha.
     is_duplicate = combined.index.duplicated(keep="last")
     frame = combined.loc[~is_duplicate].sort_index()
-    frame["is_partial"] = (frame.index + STEP[resolution]) > pd.Timestamp(now)
+    candle_end = frame.index.to_series() + STEP[resolution]
+    frame["is_partial"] = candle_end > frame["fetched_at"]
     return SilverCandles(frame[COLUMNS], duplicates_removed=int(is_duplicate.sum()))
 
 

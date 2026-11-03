@@ -192,6 +192,18 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - **Dois erros meus nos testes, corrigidos:** o teste de "dado velho" usava candles sintéticos que já terminavam 15 dias antes do `now`, então até o caso "fresco" era velho; e um `product` do itertools precisava virar lista para o pytest.
 - **Ainda não feito (PR B):** ler o gold do banco, o comando `analisar` e a execução real. O backtest aparece como "ainda não disponível" nos detalhes até a etapa 11.
 
+### Etapa 7 — Explainer e análise, PR B: banco, comando `analisar` e execução real (etapa 7 concluída)
+- `infra/repositories.py`: `load_fact_frame` e `load_last_candle_ts`. `pipeline/build_analysis.py`: `build_analysis` (lê candles e gold e devolve o `Analysis`) e `NoDataError`. CLI: `crypto-analyzer analisar <ATIVO> [--detalhes]`; ativo fora de BTC, ETH e SOL recebe a mensagem amigável (código de saída 1) antes de qualquer acesso ao banco.
+- **Execução real em 2026-11-03.** Os dados eram da coleta de 29/10, então o aviso de dado velho apareceu de verdade ("6 dias atrás"). Respostas reais (candles até 28/10): BTC em alta e calmo; ETH e SOL de lado e calmos; os 3 "andam junto" do BTC.
+- **A API do Mercado Bitcoin estava fora do ar** (HTTP 302 para "Página indisponível", em todos os endpoints, também com `curl`). Nada foi gravado pela metade (conferi a bronze: 1 resposta por ativo, de 29/10). **A atualização dos dados não pôde ser feita**; fica pendente até a API voltar.
+- **Defeito meu encontrado nessa falha:** o erro chegava ao usuário como um traceback com HTML dentro. Agora o cliente diz "a API redirecionou em vez de responder (provavelmente fora do ar ou em manutenção)" e o `coletar` mostra uma mensagem curta, mantém o que já estava gravado e sai com código 1.
+- **BUG SÉRIO, encontrado lendo as respostas reais:** a silver marcava `is_partial` comparando com a hora do **processamento**. O candle de 29/10 foi coletado às 21:05 UTC do próprio dia (incompleto), mas, ao reprocessar em 03/11, passou a valer como fechado, e o RSI, a volatilidade e o regime "de ontem" eram calculados sobre um retrato parcial. **Correção:** o candle só é fechado se a coleta que o trouxe aconteceu depois do fim dele (`build_silver` não recebe mais `now`). Tem testes que reproduzem o caso real e o caso em que uma coleta posterior o completa. O gold agora apaga as linhas posteriores ao último candle fechado.
+- **Reparo dos dados reais:** reprocessei a silver e recalculei o gold. Verificado no banco: o candle de 29/10 voltou a `is_partial = true` nos 3 ativos e o gold voltou a 4.887, 2.878 e 1.795 dias (os mesmos números da etapa 6), terminando em 28/10.
+- **Concordância de gênero:** o texto dizia "para a BTC" e "bem calma" para o BTC. `config/assets.yaml` ganhou `article` (o BTC, o ETH, a SOL); o texto usa o artigo e concorda os adjetivos ("bem calmo", "agitado", "do ETH", "da SOL").
+- 213 testes passando (15 novos nesta parte): montagem a partir do banco (candle parcial fora, mas contado na idade do dado), BTC sem correlação, dado velho com "7 dias atrás", erro sem dados, ativo fora do escopo, API fora do ar no CLI, regra do candle parcial, limpeza do gold e concordância de gênero.
+- **Pendente:** atualizar os dados (`coletar`, `processar`, `calcular`) quando a API voltar; o backtest aparece como "ainda não disponível" até a etapa 11.
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
-- Etapa 7: explainer (números -> texto simples) e o comando `analisar` com `--detalhes`.
+- Quando a API do Mercado Bitcoin voltar: `coletar --candles 30`, `processar` e `calcular` para atualizar os dados (a última coleta é de 29/10).
+- Etapa 8: planilha Excel (`frames.py`, `excel.py`, comando `planilha`).

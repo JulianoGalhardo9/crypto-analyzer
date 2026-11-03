@@ -5,9 +5,12 @@ from datetime import UTC, datetime
 import typer
 
 from crypto_analyzer.config import Settings, load_assets, load_quality_config, load_regime_config
+from crypto_analyzer.core.explainer import explain, explain_details, unsupported_asset_message
 from crypto_analyzer.infra.db import make_engine, make_session_factory
 from crypto_analyzer.infra.mercado_bitcoin import MercadoBitcoinClient
 from crypto_analyzer.pipeline.bronze import ingest_candles
+from crypto_analyzer.pipeline.build_analysis import NoDataError, build_analysis
+from crypto_analyzer.pipeline.market_data import MarketDataError
 from crypto_analyzer.pipeline.process import process_silver
 from crypto_analyzer.pipeline.process_gold import process_gold
 
@@ -44,7 +47,14 @@ def coletar(
                 client, session_factory, symbols, resolucao, to=datetime.now(UTC), countback=candles
             )
 
-    saved = asyncio.run(run())
+    try:
+        saved = asyncio.run(run())
+    except MarketDataError as error:
+        typer.echo(
+            f"Não consegui coletar: {error}.\n"
+            "O que já tinha sido gravado foi mantido. Tente de novo mais tarde."
+        )
+        raise typer.Exit(code=1) from None
     typer.echo(f"Pronto: {len(saved)} respostas gravadas na bronze ({resolucao}).")
 
 
@@ -88,3 +98,35 @@ def calcular() -> None:
             f"{summary.indicator_rows_with_data} com média de 200 dias | "
             f"regime atual: {summary.latest_regime or 'sem histórico suficiente'}"
         )
+
+
+@app.command()
+def analisar(
+    ativo: str = typer.Argument(..., help="BTC, ETH ou SOL."),
+    detalhes: bool = typer.Option(False, "--detalhes", help="Mostra os números por trás."),
+) -> None:
+    """Explica em linguagem simples como está um ativo."""
+    assets = load_assets()
+    base = ativo.upper().removesuffix(f"-{assets.quote}")
+    # A checagem do ativo vem antes de qualquer acesso ao banco.
+    if base not in {asset.symbol for asset in assets.assets}:
+        typer.echo(unsupported_asset_message())
+        raise typer.Exit(code=1)
+
+    session_factory = make_session_factory(make_engine(Settings().database_url))  # type: ignore[call-arg]
+    try:
+        analysis = build_analysis(
+            session_factory,
+            assets,
+            base,
+            datetime.now(UTC),
+            load_quality_config(),
+            load_regime_config(),
+        )
+    except NoDataError:
+        typer.echo(
+            f"Ainda não tenho dados de {base}. Rode, nesta ordem: "
+            "crypto-analyzer coletar, processar e calcular."
+        )
+        raise typer.Exit(code=1) from None
+    typer.echo(explain_details(analysis) if detalhes else explain(analysis))

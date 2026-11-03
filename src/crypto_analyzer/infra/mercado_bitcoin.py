@@ -116,6 +116,12 @@ class MercadoBitcoinClient:
                 )
                 continue
 
+            if response.is_redirect:
+                # Visto em 2026-11-03: a API toda respondeu 302 para uma página de "indisponível".
+                raise MarketDataError(
+                    f"HTTP {response.status_code}: a API redirecionou em vez de responder "
+                    "(provavelmente fora do ar ou em manutenção)"
+                )
             if response.status_code != httpx.codes.OK:
                 raise MarketDataError(f"HTTP {response.status_code}: {response.text[:200]}")
 
