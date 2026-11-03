@@ -93,6 +93,21 @@ Formato: decisão, motivo e alternativa descartada.
 - **Upsert compartilhado (`_upsert_frame`)** — silver e gold usam a mesma lógica de `ON CONFLICT DO UPDATE`; o reprocessamento é seguro para backfill e retry.
 - **Tudo em uma transação** — se algo falhar no meio, o gold não fica pela metade.
 
+## Explainer
+
+- **"Últimas 24h" é o último dia fechado, com a data** — sem candles horários não há janela móvel de 24h; mostrar "24h" seria fingir precisão. Muda quando os horários entrarem.
+- **Dado velho usa o mesmo limite da qualidade** (`max_age_hours`, 48 h) — uma única definição de "atrasado" no projeto.
+- **Tendência por alinhamento, não por número fixo** — preço > média 50 > média 200 é subindo; o inverso, caindo; o resto, de lado. É uma regra estrutural (ordem), sem corte arbitrário.
+- **Sem a média de 200 dias, "sem conclusão"** — em vez de usar uma média mais curta e fingir a mesma confiança.
+- **RSI só aparece nos extremos (70 e 30)** — são os limites clássicos de Wilder, não cortes inventados; no meio do caminho o RSI não diz nada de útil e só aumentaria a resposta.
+- **Frases com números vêm dos dados** — "variou cerca de X% por dia e, em 1 de cada 10 dias, mais de Y%" usa a mediana e o percentil 90 do último ano daquele ativo.
+- **Correlação: fato + comparação com o normal** — "anda junto" é verdade quase sempre (medido); a informação nova é se hoje está mais ou menos colada que o normal do próprio ativo.
+- **Cortes 0,7 e 0,4 para a força da correlação** — convenção usual da estatística; é só a palavra ("junto", "parcialmente", "independente"). O que diferencia os dias é o percentil.
+- **Suporte e resistência = mínima e máxima de 30 e 90 dias** — definição simples (canal de Donchian), explicitamente rotulada como "mínima e máxima recentes".
+- **Nenhuma previsão no texto** — o RSI alto diz que "subiu muito rápido", nunca que "vai cair". Há teste para isso.
+- **Texto puro, sem formatação de terminal** — o mesmo texto serve para o CLI e, na etapa 12, para o bot do Telegram.
+- **O explainer não calcula nada** — recebe o `Analysis` pronto; os números vêm do pandas, nunca do texto (regra do CLAUDE.md sobre LLM e cálculo vale aqui também).
+
 ## Idioma
 
 - **Comentários e docstrings em português; nomes de código e commits em inglês** — o projeto é de estudo e os comentários servem de explicação para o autor; o inglês nos nomes e commits mantém o padrão do mercado e do portfólio.
