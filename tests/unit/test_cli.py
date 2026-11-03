@@ -1,3 +1,4 @@
+import re
 from types import TracebackType
 
 import pytest
@@ -23,8 +24,10 @@ def test_unsupported_asset_gets_a_friendly_message_without_touching_the_database
 def test_analisar_is_documented_in_the_help() -> None:
     result = runner.invoke(app, ["analisar", "--help"])
 
+    # Com FORCE_COLOR (como no CI) a ajuda vem com códigos ANSI que partem o texto; tiramos antes.
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
     assert result.exit_code == 0
-    assert "--detalhes" in result.output
+    assert "--detalhes" in plain
 
 
 class DownClient:
