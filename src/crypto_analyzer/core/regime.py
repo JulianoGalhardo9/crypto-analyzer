@@ -28,6 +28,17 @@ def volatility_percentile(volatility: pd.Series, window: int, min_history: int) 
     return (ranked * 100).rename("volatility_percentile")
 
 
+def latest_percentile(values: pd.Series, window: int, min_history: int) -> float | None:
+    """Posição (0 a 100) do último valor entre os últimos `window` valores válidos da série.
+
+    `None` se houver menos de `min_history` valores: sem histórico não há conclusão confiável.
+    """
+    recent = values.dropna().iloc[-window:]
+    if len(recent) < min_history:
+        return None
+    return float((recent <= recent.iloc[-1]).mean() * 100)
+
+
 def classify(percentile: pd.Series, calm_below: float, high_above: float) -> pd.Series:
     """Percentil -> regime. `<= calm_below` é calma, `> high_above` é alta, o resto é normal."""
     labels = np.select(

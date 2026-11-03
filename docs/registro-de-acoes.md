@@ -181,6 +181,17 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - **Conferência cruzada** com os scripts independentes das etapas 4 e 5, no último candle fechado (2026-10-28): RSI 60,1 / 51,2 / 51,2, ATR 13.811,46 / 510,82 / 26,45, correlação ETH 0,883 e SOL 0,828, percentis 31 / 15 / 18, regime `calm` nos 3. Tudo igual.
 - **Etapa 6 concluída.** `fact_backtest` fica para a etapa 11. Candles horários seguem não coletados.
 
+### Etapa 7 — Explainer e análise, PR A: peças puras
+- Decisões tomadas por delegação do autor (registradas no CLAUDE.md): **"últimas 24h" = último dia fechado** (sem candles horários, uma janela móvel de 24h seria fingir precisão) e **dado velho** reaproveita `max_age_hours` de `config/quality.yaml` (48 h).
+- `core/models.py`: `Analysis` (todos os números de um ativo), `Trend`, `CorrelationLevel`. `core/trend.py`: `classify_trend` (preço > média 50 > média 200 = subindo; o inverso = caindo; qualquer outra ordem = de lado; sem média 200 = sem conclusão). `core/regime.py`: `latest_percentile`. `core/indicators.py`: `recent_extremes` (mínima e máxima recentes como suporte e resistência, definição simples de canal de Donchian).
+- `core/explainer.py`: `explain` (resposta padrão: 4 linhas + explicação), `explain_details` (números técnicos) e `unsupported_asset_message`. Números em formato brasileiro (`R$ 435.668,00`, `+3,2%`). RSI só é mencionado nos extremos (70 e 30, convenção de Wilder) e sempre explicado.
+- `pipeline/analysis.py`: `assemble_analysis` junta candles e gold no objeto `Analysis` (puro, sem banco).
+- **A frase sobre "variações comuns" vem dos dados:** mediana e percentil 90 do movimento diário no último ano, não de um texto fixo.
+- **Correlação com o BTC:** como medimos que é sempre alta (mínimo 0,50), o texto diz o fato ("anda junto") **e** se hoje está mais ou menos colada que o normal, por percentil do próprio histórico (mesmos cortes 33/66).
+- 101 testes novos (total 198): as regras do CLAUDE.md valem em **todas as 64 combinações** de tendência, agitação e correlação (nunca "compre/venda", nunca previsão, sempre o aviso, no máximo 4 linhas de informação, nenhum NaN vazando); histórico insuficiente e dado velho avisados; BTC sem linha de correlação; números calculados à mão.
+- **Dois erros meus nos testes, corrigidos:** o teste de "dado velho" usava candles sintéticos que já terminavam 15 dias antes do `now`, então até o caso "fresco" era velho; e um `product` do itertools precisava virar lista para o pytest.
+- **Ainda não feito (PR B):** ler o gold do banco, o comando `analisar` e a execução real. O backtest aparece como "ainda não disponível" nos detalhes até a etapa 11.
+
 ## Pendências abertas
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
 - Etapa 7: explainer (números -> texto simples) e o comando `analisar` com `--detalhes`.
