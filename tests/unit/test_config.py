@@ -11,5 +11,6 @@ def test_assets_config_has_names_and_the_benchmark_among_the_assets() -> None:
     config = load_assets()
 
     assert [asset.name for asset in config.assets] == ["Bitcoin", "Ethereum", "Solana"]
+    assert [asset.article for asset in config.assets] == ["o", "o", "a"]
     assert config.benchmark_symbol == "BTC-BRL"
     assert config.benchmark_symbol in config.symbols

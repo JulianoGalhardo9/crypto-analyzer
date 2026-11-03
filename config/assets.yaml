@@ -2,7 +2,8 @@
 quote: BRL
 # Ativo de referência para a correlação ("anda junto com o BTC?").
 benchmark: BTC
+# article: o artigo de cada ativo em português (o BTC, o ETH, a SOL), usado nos textos.
 assets:
-  - {symbol: BTC, name: Bitcoin}
-  - {symbol: ETH, name: Ethereum}
-  - {symbol: SOL, name: Solana}
+  - {symbol: BTC, name: Bitcoin, article: o}
+  - {symbol: ETH, name: Ethereum, article: o}
+  - {symbol: SOL, name: Solana, article: a}

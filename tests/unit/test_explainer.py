@@ -18,6 +18,7 @@ def make_analysis(**overrides: object) -> Analysis:
         symbol="SOL-BRL",
         base="SOL",
         name="Solana",
+        article="a",
         is_benchmark=False,
         as_of=datetime(2026, 10, 28, tzinfo=UTC),
         last_candle_ts=datetime(2026, 10, 29, tzinfo=UTC),
@@ -148,7 +149,9 @@ def test_rsi_is_mentioned_only_at_the_extremes_and_explained() -> None:
 
 
 def test_btc_has_no_correlation_line() -> None:
-    text = explain(make_analysis(base="BTC", name="Bitcoin", is_benchmark=True, corr_btc_90=None))
+    text = explain(
+        make_analysis(base="BTC", name="Bitcoin", article="o", is_benchmark=True, corr_btc_90=None)
+    )
 
     assert "Com o BTC" not in text
     assert "não se aplica" in explain_details(
@@ -202,3 +205,19 @@ def test_thousands_use_dot_and_decimals_use_comma() -> None:
 
 def test_unsupported_asset_message_is_friendly() -> None:
     assert unsupported_asset_message() == "Por enquanto acompanho apenas BTC, ETH e SOL."
+
+
+def test_text_agrees_with_the_gender_of_each_asset() -> None:
+    sol = explain(make_analysis(regime=Regime.CALM))  # a SOL
+    eth = explain(
+        make_analysis(base="ETH", name="Ethereum", article="o", regime=Regime.CALM)
+    )  # o ETH
+
+    assert "ETH (Ethereum) está em alta, e bem calmo." in eth
+    assert "para o ETH" in eth and "o BTC cai, o ETH costuma cair" in eth
+    assert "SOL (Solana) está em alta, e bem calma." in sol
+    assert "para a SOL" in sol and "a SOL costuma cair" in sol
+    assert "último ano do ETH" in explain_details(
+        make_analysis(base="ETH", name="Ethereum", article="o")
+    )
+    assert "último ano da SOL" in explain_details(make_analysis())

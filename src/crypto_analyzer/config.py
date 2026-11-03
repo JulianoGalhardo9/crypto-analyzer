@@ -19,6 +19,7 @@ ASSETS_PATH = Path(__file__).parents[2] / "config" / "assets.yaml"
 class AssetInfo(BaseModel):
     symbol: str
     name: str
+    article: str  # "o" ou "a": concorda com o texto (o BTC, a SOL)
 
 
 class AssetsConfig(BaseModel):

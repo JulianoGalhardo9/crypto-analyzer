@@ -61,7 +61,7 @@ def explain_details(analysis: Analysis) -> str:
         f"  Bandas de Bollinger (20 dias): {_money(a.bb_lower)} — {_money(a.bb_middle)} — "
         f"{_money(a.bb_upper)}",
         f"  Volatilidade diária (30 dias): {_pct(a.volatility, signed=False)}",
-        f"  Percentil da volatilidade (vs. último ano da {a.base}): "
+        f"  Percentil da volatilidade (vs. último ano {_of(a)}): "
         f"{_num(a.volatility_percentile, 0)}",
         f"  Agitação: {_regime_name(a.regime)} (leitura do dia, sem a confirmação: "
         f"{_regime_name(a.raw_regime)})",
@@ -94,10 +94,11 @@ def _headline(a: Analysis) -> str:
         Trend.DOWN: "em queda",
         None: None,
     }[a.trend]
+    feminine = a.article == "a"
     agitation = {
-        Regime.CALM: "bem calma",
+        Regime.CALM: "bem calma" if feminine else "bem calmo",
         Regime.NORMAL: "com agitação normal",
-        Regime.HIGH: "agitada",
+        Regime.HIGH: "agitada" if feminine else "agitado",
         None: None,
     }[a.regime]
     who = f"{a.base} ({a.name})"
@@ -105,6 +106,16 @@ def _headline(a: Analysis) -> str:
         return f"{who}: ainda não há histórico suficiente para uma conclusão confiável."
     connector = "mas" if a.regime is Regime.HIGH else "e"
     return f"{who} está {trend}, {connector} {agitation}."
+
+
+def _the(a: Analysis) -> str:
+    """Artigo + ativo: "a SOL", "o BTC"."""
+    return f"{a.article} {a.base}"
+
+
+def _of(a: Analysis) -> str:
+    """De + artigo + ativo: "da SOL", "do BTC"."""
+    return f"d{a.article} {a.base}"
 
 
 def _line(emoji: str, label: str, text: str) -> str:
@@ -122,9 +133,9 @@ def _trend_text(a: Analysis) -> str:
 
 def _agitation_text(a: Analysis) -> str:
     return {
-        Regime.HIGH: f"ALTA (o preço está oscilando mais que o normal para a {a.base})",
-        Regime.NORMAL: f"NORMAL (oscilando como de costume para a {a.base})",
-        Regime.CALM: f"CALMA (oscilando menos que o normal para a {a.base})",
+        Regime.HIGH: f"ALTA (o preço está oscilando mais que o normal para {_the(a)})",
+        Regime.NORMAL: f"NORMAL (oscilando como de costume para {_the(a)})",
+        Regime.CALM: f"CALMA (oscilando menos que o normal para {_the(a)})",
         None: "sem histórico suficiente para dizer",
     }[a.regime]
 
@@ -133,7 +144,7 @@ def _correlation_text(a: Analysis) -> str:
     if a.corr_btc_90 is None:
         return "sem histórico suficiente para dizer"
     if a.corr_btc_90 >= CORR_STRONG:
-        text = f"anda junto (quando o BTC cai, a {a.base} costuma cair também)"
+        text = f"anda junto (quando o BTC cai, {_the(a)} costuma cair também)"
     elif a.corr_btc_90 >= CORR_MODERATE:
         text = "anda parcialmente junto"
     elif a.corr_btc_90 > -CORR_MODERATE:
@@ -165,16 +176,16 @@ def _meaning(a: Analysis) -> str:
     )
     sentences.append(
         {
-            Regime.HIGH: f"A agitação está acima do normal para a {a.base}, "
+            Regime.HIGH: f"A agitação está acima do normal para {_the(a)}, "
             "com movimentos mais bruscos que de costume.",
-            Regime.NORMAL: f"A agitação está dentro do normal para a {a.base}.",
-            Regime.CALM: f"O preço está oscilando menos que o normal para a {a.base}.",
+            Regime.NORMAL: f"A agitação está dentro do normal para {_the(a)}.",
+            Regime.CALM: f"As oscilações estão menores que o normal para {_the(a)}.",
             None: "Ainda não há histórico suficiente para classificar a agitação.",
         }[a.regime]
     )
     if a.typical_daily_move is not None and a.big_daily_move is not None:
         sentences.append(
-            f"No último ano, a {a.base} costumou variar cerca de "
+            f"No último ano, {_the(a)} costumou variar cerca de "
             f"{_pct(a.typical_daily_move, signed=False)} por dia e, em 1 de cada 10 dias, "
             f"mais de {_pct(a.big_daily_move, signed=False)}."
         )
@@ -241,7 +252,7 @@ def _correlation_numbers(a: Analysis) -> str:
         return "não se aplica (o BTC é a referência)"
     return (
         f"correlação: {_num(a.corr_btc_90)} (de -1 a 1); "
-        f"percentil no último ano da {a.base}: {_num(a.corr_percentile, 0)}"
+        f"percentil no último ano {_of(a)}: {_num(a.corr_percentile, 0)}"
     )
 
 
