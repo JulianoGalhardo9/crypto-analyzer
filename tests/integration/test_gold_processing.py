@@ -1,50 +1,16 @@
 from datetime import UTC, datetime
 
-import numpy as np
-import pandas as pd
 import pytest
 from sqlalchemy import Engine, func, select
 from sqlalchemy.orm import Session
 
-from crypto_analyzer.config import AssetInfo, AssetsConfig, load_regime_config
+from crypto_analyzer.config import load_regime_config
 from crypto_analyzer.infra.db import make_session_factory
-from crypto_analyzer.infra.repositories import save_raw_candles, upsert_silver_candles
 from crypto_analyzer.infra.tables import DimAtivo, FactIndicador, FactRegime
-from crypto_analyzer.pipeline.market_data import RawCandles
 from crypto_analyzer.pipeline.process_gold import process_gold
+from tests.integration.helpers import ASSETS, DAYS, seed_silver
 
 pytestmark = pytest.mark.integration
-
-ASSETS = AssetsConfig(
-    quote="BRL",
-    benchmark="BTC",
-    assets=[AssetInfo(symbol="BTC", name="Bitcoin"), AssetInfo(symbol="SOL", name="Solana")],
-)
-DAYS = 400
-
-
-def seed_silver(session: Session, symbol: str, seed: int) -> None:
-    """Grava DAYS candles sintéticos; o último é marcado como parcial (dia em andamento)."""
-    bronze_id = save_raw_candles(
-        session,
-        RawCandles(symbol, "1d", {}, {"t": []}, datetime(2026, 10, 28, tzinfo=UTC)),
-    )
-    rng = np.random.default_rng(seed)
-    index = pd.date_range("2025-09-01", periods=DAYS, freq="D", tz="UTC", name="ts")
-    close = pd.Series(100 * np.exp(np.cumsum(rng.normal(0, 0.02, DAYS))), index=index)
-    frame = pd.DataFrame(
-        {
-            "open": close,
-            "high": close * 1.01,
-            "low": close * 0.99,
-            "close": close,
-            "volume": 1.0,
-            "is_partial": [False] * (DAYS - 1) + [True],
-            "source_bronze_id": bronze_id,
-        }
-    )
-    upsert_silver_candles(session, symbol, "1d", frame)
-    session.commit()
 
 
 def count(session: Session, model: type) -> int:
@@ -107,3 +73,22 @@ def test_missing_silver_data_is_reported_clearly(engine: Engine, session: Sessio
 
     with pytest.raises(ValueError, match="SOL-BRL"):
         process_gold(make_session_factory(engine), ASSETS, load_regime_config())
+
+
+def test_gold_rows_after_the_last_closed_candle_are_removed(
+    engine: Engine, session: Session
+) -> None:
+    seed_silver(session, "BTC-BRL", seed=1)
+    seed_silver(session, "SOL-BRL", seed=2)
+    factory = make_session_factory(engine)
+    process_gold(factory, ASSETS, load_regime_config())
+    ativo_id = session.scalars(select(DimAtivo.id).where(DimAtivo.symbol == "SOL-BRL")).one()
+    # simula um dia que já contou como fechado e voltou a ser parcial
+    session.add(FactIndicador(ativo_id=ativo_id, ts=datetime(2030, 1, 1, tzinfo=UTC)))
+    session.add(FactRegime(ativo_id=ativo_id, ts=datetime(2030, 1, 1, tzinfo=UTC)))
+    session.commit()
+
+    process_gold(factory, ASSETS, load_regime_config())
+
+    assert count(session, FactIndicador) == 2 * (DAYS - 1)
+    assert count(session, FactRegime) == 2 * (DAYS - 1)
