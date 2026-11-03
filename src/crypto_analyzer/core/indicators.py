@@ -123,6 +123,17 @@ def rolling_correlation(returns: pd.Series, other: pd.Series, window: int) -> pd
     return correlation.rename("correlation")
 
 
+def recent_extremes(high: pd.Series, low: pd.Series, window: int) -> tuple[float, float] | None:
+    """Mínima e máxima dos últimos `window` candles: referências simples de suporte e resistência.
+
+    Definição deliberadamente simples (canal de Donchian): o piso e o teto recentes do preço.
+    `None` se ainda não há `window` candles.
+    """
+    if len(low) < window:
+        return None
+    return float(low.iloc[-window:].min()), float(high.iloc[-window:].max())
+
+
 def _seeded_ewm(values: pd.Series, alpha: float, window: int) -> pd.Series:
     """Média exponencial que começa com a SMA dos primeiros `window` valores válidos.
 
