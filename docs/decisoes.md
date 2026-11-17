@@ -171,6 +171,9 @@ Formato: decisão, motivo e alternativa descartada.
 - **Média, mediana e taxa de alta** — cripto tem caudas gordas; a mediana mostra quando a média é puxada por poucos casos extremos.
 - **Sem teste estatístico de significância** — o sistema descreve; diferenças são reportadas ao lado da base e da amostra, nunca como "funciona" ou "não funciona" com certeza.
 - **Calculado dentro do `process_gold`** — `calcular` e a `daily_pipeline` mantêm o backtest atualizado sem tarefa nova. Linhas do ativo são substituídas a cada cálculo (horizonte removido do YAML não deixa linha velha).
+- **Resultado mostrado sempre com contagem e linha de base** — no `--detalhes` e na aba `Backtest`; com amostra pequena, média, mediana e taxa ficam vazias (a contagem e a base aparecem). A amostra mínima exibida é a gravada no cálculo (`fact_backtest.min_sample`), não a do YAML de agora.
+- **`Signal` e `BacktestResult` em `core/models.py`** — a `Analysis` carrega o backtest do ativo, então CLI, planilha e (depois) o bot usam a mesma fonte.
+- **Aba `Backtest` entre `Mudanças` e `Qualidade`** — perto das abas de regime; colunas Ativo e Sinal congeladas.
 - **Limites do RSI (70/30) em `core/indicators.py`** — compartilhados pelo texto e pelo backtest; são a convenção de Wilder, não parâmetros ajustados aos dados.
 
 ## Idioma

@@ -11,7 +11,15 @@ from crypto_analyzer.core.explainer import (
     regime_change_message,
     unsupported_asset_message,
 )
-from crypto_analyzer.core.models import Analysis, CorrelationLevel, Regime, RegimeChange, Trend
+from crypto_analyzer.core.models import (
+    Analysis,
+    BacktestResult,
+    CorrelationLevel,
+    Regime,
+    RegimeChange,
+    Signal,
+    Trend,
+)
 
 
 def make_analysis(**overrides: object) -> Analysis:
@@ -195,7 +203,7 @@ def test_details_show_the_numbers_behind_the_answer() -> None:
         "ATR de 14 dias: R$ 26,45 (4,8% do preço",
         "correlação: 0,83",
         "30 dias: R$ 480,00 — R$ 560,00",
-        "Backtest dos sinais: ainda não disponível.",
+        "Backtest dos sinais: ainda não calculado",
     ):
         assert expected in text
 
@@ -233,3 +241,59 @@ def test_regime_change_message_is_plain_and_has_the_disclaimer() -> None:
     assert "16/11/2026" in text
     assert "não é recomendação de investimento" in text
     assert not any(word in text.lower() for word in ("compre", "venda"))
+
+
+# --- backtest nos detalhes ---
+
+
+def backtest(horizon: int, enough: bool, signal: Signal = Signal.RSI_ABOVE_HIGH) -> BacktestResult:
+    return BacktestResult(
+        signal=signal,
+        horizon_days=horizon,
+        raw_count=107,
+        independent_count=84,
+        evaluated_count=84 if enough else 12,
+        enough_sample=enough,
+        mean_return=0.061 if enough else None,
+        median_return=0.04 if enough else None,
+        hit_rate=0.73 if enough else None,
+        baseline_mean=0.016,
+        baseline_hit_rate=0.54,
+        first_event=None,
+        last_event=None,
+    )
+
+
+def test_details_compare_each_signal_with_any_day() -> None:
+    analysis = make_analysis(
+        backtests=(backtest(7, True), backtest(30, False)), backtest_min_sample=20
+    )
+
+    text = explain_details(analysis)
+
+    assert "RSI passou de 70 (subiu rápido): 84 vezes (107 dias com o sinal)" in text
+    assert (
+        "7 dias depois: média +6,1% (qualquer dia: +1,6%), mediana +4,0%, "
+        "subiu em 73,0% das vezes (qualquer dia: 54,0%); 84 vezes"
+    ) in text
+    assert "não é previsão" in text
+
+
+def test_small_sample_shows_no_average() -> None:
+    analysis = make_analysis(backtests=(backtest(30, False),), backtest_min_sample=20)
+
+    text = explain_details(analysis)
+
+    assert (
+        "30 dias depois: amostra pequena demais para concluir (12 vezes com resultado; mínimo 20)"
+        in text
+    )
+    assert "média" not in text.split("Backtest dos sinais")[1]
+
+
+def test_backtest_text_never_tells_to_buy_or_sell() -> None:
+    results = tuple(backtest(h, h == 7, s) for s in Signal for h in (7, 30))
+
+    text = explain_details(make_analysis(backtests=results, backtest_min_sample=20)).lower()
+
+    assert not any(word in text for word in ("compre", "venda", "vai subir", "vai cair"))

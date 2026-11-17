@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import datetime
 
 import pandas as pd
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from crypto_analyzer.config import AssetsConfig, QualityConfig, RegimeConfig
 from crypto_analyzer.core.models import Analysis
 from crypto_analyzer.infra.repositories import (
+    load_backtests,
     load_closed_candles,
     load_fact_frame,
     load_last_candle_ts,
@@ -39,11 +41,12 @@ def build_analysis(
         indicators = load_fact_frame(session, FactIndicador, symbol)
         regimes = load_fact_frame(session, FactRegime, symbol)
         last_candle_ts = load_last_candle_ts(session, symbol, RESOLUTION)
+        backtests, min_sample = load_backtests(session, symbol)
 
     if candles.empty or indicators.empty or regimes.empty or last_candle_ts is None:
         raise NoDataError(f"ainda não há dados calculados de {base}")
 
-    return assemble_analysis(
+    analysis = assemble_analysis(
         symbol=symbol,
         base=base,
         name=asset.name,
@@ -55,3 +58,4 @@ def build_analysis(
         max_age_hours=quality.max_age_hours[RESOLUTION],
         regime_config=regime,
     )
+    return replace(analysis, backtests=tuple(backtests), backtest_min_sample=min_sample)

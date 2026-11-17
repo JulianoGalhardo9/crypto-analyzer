@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 
 from crypto_analyzer.config import AssetInfo, AssetsConfig, RegimeConfig
+from crypto_analyzer.core.backtest import run_backtest
 from crypto_analyzer.core.models import Analysis, CorrelationLevel, Regime, Trend
-from crypto_analyzer.pipeline.gold import compute_gold
+from crypto_analyzer.pipeline.gold import GoldFrames, compute_gold
 from crypto_analyzer.reports.frames import QualityRecord, ReportData
 
 ASSETS = AssetsConfig(
@@ -88,6 +89,18 @@ def make_analysis(base: str, name: str, **overrides: object) -> Analysis:
     return Analysis(**values)  # type: ignore[arg-type]
 
 
+# Amostra mínima baixa de propósito: os dados sintéticos têm poucos sinais e o teste precisa
+# de resultados dos dois tipos (com e sem amostra suficiente).
+MIN_SAMPLE = 5
+
+
+def backtest_fields(candles: pd.DataFrame, gold: GoldFrames) -> dict[str, object]:
+    results = run_backtest(
+        candles["close"], gold.indicators["rsi_14"], gold.indicators["sma_200"], [7, 30], MIN_SAMPLE
+    )
+    return {"backtests": tuple(results), "backtest_min_sample": MIN_SAMPLE}
+
+
 def build_report_data() -> ReportData:
     candles = {"BTC-BRL": make_candles(1), "SOL-BRL": make_candles(2, 700)}
     gold = compute_gold(candles, "BTC-BRL", REGIME)
@@ -107,7 +120,12 @@ def build_report_data() -> ReportData:
             ),
             QualityRecord("BTC-BRL", "duplicate", "info", None, None, "3 candles repetidos"),
         ],
-        analyses=[make_analysis("BTC", "Bitcoin"), make_analysis("SOL", "Solana", article="a")],
+        analyses=[
+            make_analysis("BTC", "Bitcoin", **backtest_fields(candles["BTC-BRL"], gold["BTC-BRL"])),
+            make_analysis(
+                "SOL", "Solana", article="a", **backtest_fields(candles["SOL-BRL"], gold["SOL-BRL"])
+            ),
+        ],
         generated_at=NOW,
         window_days=WINDOW,
     )

@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 from crypto_analyzer.config import AssetsConfig
+from crypto_analyzer.core.explainer import SIGNAL_NAMES
 from crypto_analyzer.core.models import Analysis, Regime, Trend
 
 DISCLAIMER = "Informativo, não é recomendação de investimento."
@@ -186,6 +187,58 @@ def quality_frame(data: ReportData) -> pd.DataFrame:
     return frame.sort_values(["Ativo", "Verificação", "Início"], kind="stable", ignore_index=True)
 
 
+BACKTEST_COLUMNS = [
+    "Ativo",
+    "Sinal",
+    "Horizonte (dias)",
+    "Dias com o sinal",
+    "Ocorrências independentes",
+    "Ocorrências com resultado",
+    "Amostra suficiente",
+    "Retorno médio",
+    "Retorno mediano",
+    "Subiu em",
+    "Retorno médio (qualquer dia)",
+    "Subiu em (qualquer dia)",
+    "Primeiro sinal",
+    "Último sinal",
+]
+
+
+def backtest_frame(data: ReportData) -> pd.DataFrame:
+    """Aba Backtest: uma linha por ativo, sinal e horizonte, sempre com as contagens.
+
+    Com amostra pequena, média, mediana e taxa ficam vazias (não há conclusão); a linha de
+    base (qualquer dia) aparece sempre.
+    """
+    rows = [
+        {
+            "Ativo": a.base,
+            "Sinal": SIGNAL_NAMES[r.signal],
+            "Horizonte (dias)": r.horizon_days,
+            "Dias com o sinal": r.raw_count,
+            "Ocorrências independentes": r.independent_count,
+            "Ocorrências com resultado": r.evaluated_count,
+            "Amostra suficiente": "Sim" if r.enough_sample else "Não",
+            "Retorno médio": r.mean_return,
+            "Retorno mediano": r.median_return,
+            "Subiu em": r.hit_rate,
+            "Retorno médio (qualquer dia)": r.baseline_mean,
+            "Subiu em (qualquer dia)": r.baseline_hit_rate,
+            "Primeiro sinal": _naive(r.first_event) if r.first_event else pd.NaT,
+            "Último sinal": _naive(r.last_event) if r.last_event else pd.NaT,
+        }
+        for a in data.analyses
+        for r in a.backtests
+    ]
+    frame = pd.DataFrame(rows, columns=BACKTEST_COLUMNS)
+    numeric = BACKTEST_COLUMNS[7:12]
+    frame[numeric] = frame[numeric].astype("float64")
+    for column in ("Primeiro sinal", "Último sinal"):
+        frame[column] = pd.to_datetime(frame[column])
+    return frame
+
+
 def about_frame(data: ReportData) -> pd.DataFrame:
     """Aba Sobre: de onde vêm os dados, a janela usada e o aviso."""
     last_day = max(a.as_of for a in data.analyses)
@@ -206,12 +259,26 @@ def about_frame(data: ReportData) -> pd.DataFrame:
         ("Datas", "São dias em UTC, sem fuso horário"),
         ("Indicadores", "Calculados sobre todo o histórico disponível de cada ativo"),
         ("Rótulos de agitação", "Percentil da volatilidade nos últimos 365 dias do próprio ativo"),
+        ("Backtest", _backtest_note(data)),
         ("Aviso", DISCLAIMER),
     ]
     return pd.DataFrame(rows, columns=["Campo", "Valor"])
 
 
 # --- auxiliares ---
+
+
+def _backtest_note(data: ReportData) -> str:
+    minimum = next((a.backtest_min_sample for a in data.analyses if a.backtest_min_sample), None)
+    rule = (
+        f"abaixo de {minimum} ocorrências independentes não há média"
+        if minimum is not None
+        else "ainda não calculado"
+    )
+    return (
+        "O que aconteceu com o preço depois de cada sinal, comparado com um dia qualquer; "
+        f"{rule}. Descreve o passado, não é previsão."
+    )
 
 
 def _stack(

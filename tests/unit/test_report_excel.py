@@ -24,6 +24,7 @@ SHEETS = [
     "Indicadores",
     "Regimes",
     "Mudanças",
+    "Backtest",
     "Qualidade",
     "Gráficos",
     "Sobre",
@@ -154,3 +155,20 @@ def test_about_sheet_has_the_disclaimer(book: Workbook) -> None:
 def test_default_path_has_the_utc_date() -> None:
     path = default_report_path(Path("output"), datetime(2026, 10, 27, 23, tzinfo=UTC))
     assert path == Path("output/crypto_report_2026-10-27.xlsx")
+
+
+def test_backtest_blanks_only_where_the_sample_is_too_small(book: Workbook) -> None:
+    names = header(book, "Backtest")
+    rows = list(book["Backtest"].iter_rows(min_row=2, values_only=True))
+    enough = {row[names.index("Amostra suficiente")] for row in rows}
+
+    assert enough == {"Sim", "Não"}  # os dados de teste têm os dois casos
+    for row in rows:
+        values = dict(zip(names, row, strict=True))
+        assert isinstance(values["Ocorrências independentes"], int)  # contagem sempre presente
+        assert isinstance(values["Retorno médio (qualquer dia)"], float)  # base sempre presente
+        if values["Amostra suficiente"] == "Sim":
+            assert isinstance(values["Retorno médio"], float)
+        else:
+            assert values["Retorno médio"] is None and values["Subiu em"] is None
+    assert book["Backtest"].cell(2, names.index("Retorno médio") + 1).number_format == "0.0%"

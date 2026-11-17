@@ -5,6 +5,7 @@ from crypto_analyzer.reports.frames import (
     DISCLAIMER,
     ReportData,
     about_frame,
+    backtest_frame,
     candles_frame,
     indicators_frame,
     quality_frame,
@@ -238,3 +239,23 @@ def test_about_sheet_warns_when_data_is_old() -> None:
     assert (
         "ATENÇÃO" in values["Atualidade dos dados"] and "6 dias" in values["Atualidade dos dados"]
     )
+
+
+def test_backtest_sheet_has_every_signal_and_horizon_per_asset(data: ReportData) -> None:
+    frame = backtest_frame(data)
+
+    assert len(frame) == 2 * 4 * 2  # 2 ativos x 4 sinais x 2 horizontes
+    assert frame["Ativo"].unique().tolist() == ["BTC", "SOL"]
+    assert frame["Sinal"].str.contains("RSI passou de 70").any()
+    small = frame["Amostra suficiente"] == "Não"
+    assert frame.loc[small, "Retorno médio"].isna().all()
+    assert frame.loc[~small, "Retorno médio"].notna().all()
+    assert frame["Retorno médio (qualquer dia)"].notna().all()
+    assert frame["Retorno médio"].dtype == "float64"
+
+
+def test_about_sheet_explains_the_backtest_rule(data: ReportData) -> None:
+    about = dict(zip(about_frame(data)["Campo"], about_frame(data)["Valor"], strict=True))
+
+    assert "abaixo de 5 ocorrências independentes não há média" in about["Backtest"]
+    assert "não é previsão" in about["Backtest"]

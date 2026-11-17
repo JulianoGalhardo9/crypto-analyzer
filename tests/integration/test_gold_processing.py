@@ -5,7 +5,8 @@ from sqlalchemy import Engine, delete, func, select
 from sqlalchemy.orm import Session
 
 from crypto_analyzer.config import BacktestConfig, load_backtest_config, load_regime_config
-from crypto_analyzer.core.backtest import Signal, run_backtest
+from crypto_analyzer.core.backtest import run_backtest
+from crypto_analyzer.core.models import Signal
 from crypto_analyzer.core.regime import regime_changes_after
 from crypto_analyzer.infra.db import make_session_factory
 from crypto_analyzer.infra.repositories import load_closed_candles, load_fact_frame

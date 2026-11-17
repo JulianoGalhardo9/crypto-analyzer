@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from crypto_analyzer.config import QualityConfig, load_backtest_config, load_regime_config
 from crypto_analyzer.core.explainer import explain
-from crypto_analyzer.core.models import Regime
+from crypto_analyzer.core.models import Regime, Signal
 from crypto_analyzer.infra.db import make_session_factory
 from crypto_analyzer.pipeline.build_analysis import NoDataError, build_analysis
 from crypto_analyzer.pipeline.process_gold import process_gold
@@ -96,3 +96,22 @@ def test_unknown_asset_is_a_key_error(engine: Engine, session: Session) -> None:
             QUALITY,
             load_regime_config(),
         )
+
+
+def test_analysis_carries_the_stored_backtest(engine: Engine, session: Session) -> None:
+    prepare(engine, session)
+
+    analysis = build_analysis(
+        make_session_factory(engine),
+        ASSETS,
+        "SOL",
+        datetime(2026, 10, 5, 12, tzinfo=UTC),
+        QUALITY,
+        load_regime_config(),
+    )
+
+    config = load_backtest_config()
+    assert analysis.backtest_min_sample == config.min_sample
+    assert [(r.signal, r.horizon_days) for r in analysis.backtests] == [
+        (signal, horizon) for signal in Signal for horizon in config.horizons_days
+    ]
