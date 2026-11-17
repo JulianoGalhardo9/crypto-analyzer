@@ -7,6 +7,10 @@ Os primeiros `window - 1` resultados são NaN (ainda não há dados suficientes)
 import numpy as np
 import pandas as pd
 
+# Limites clássicos do RSI (Wilder): acima de 70 subiu rápido demais; abaixo de 30, caiu.
+RSI_HIGH = 70
+RSI_LOW = 30
+
 
 def sma(close: pd.Series, window: int) -> pd.Series:
     """Média móvel simples: a média dos últimos `window` valores."""

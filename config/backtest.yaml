@@ -1,0 +1,6 @@
+# Backtest dos sinais (ver docs/decisoes.md; decisões do autor em 2026-11-17).
+# Abaixo deste número de ocorrências independentes, o sistema diz "amostra pequena demais
+# para concluir" em vez de mostrar média.
+min_sample: 20
+# Em quantos dias (de calendário) depois do sinal o retorno é medido.
+horizons_days: [7, 30]
