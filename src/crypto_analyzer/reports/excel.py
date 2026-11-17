@@ -16,6 +16,7 @@ from crypto_analyzer import __version__
 from crypto_analyzer.reports.frames import (
     ReportData,
     about_frame,
+    backtest_frame,
     candles_frame,
     indicators_frame,
     quality_frame,
@@ -64,6 +65,17 @@ COLUMN_FORMATS: dict[str, str] = {
     "Dias no regime anterior": INTEGER,
     "Janela exibida (dias)": INTEGER,
     "Gerado em (UTC)": "dd/mm/yyyy hh:mm",
+    "Horizonte (dias)": INTEGER,
+    "Dias com o sinal": INTEGER,
+    "Ocorrências independentes": INTEGER,
+    "Ocorrências com resultado": INTEGER,
+    "Retorno médio": PERCENT,
+    "Retorno mediano": PERCENT,
+    "Subiu em": PERCENT,
+    "Retorno médio (qualquer dia)": PERCENT,
+    "Subiu em (qualquer dia)": PERCENT,
+    "Primeiro sinal": DATE,
+    "Último sinal": DATE,
 }
 # Colunas com cor: regimes (por texto) e valores positivos/negativos.
 REGIME_COLUMNS = {
@@ -73,10 +85,18 @@ REGIME_COLUMNS = {
     "Regime anterior",
     "Novo regime",
 }
-SIGNED_COLUMNS = {"Variação 1 dia", "Variação 7 dias", "Variação 30 dias", "Histograma do MACD"}
+SIGNED_COLUMNS = {
+    "Variação 1 dia",
+    "Variação 7 dias",
+    "Variação 30 dias",
+    "Histograma do MACD",
+    "Retorno médio",
+    "Retorno mediano",
+    "Retorno médio (qualquer dia)",
+}
 WIDE_COLUMNS = {"Detalhe": 70, "Valor": 90, "Campo": 28, "Fonte dos dados": 50}
 # Quantas colunas ficam congeladas à esquerda além do cabeçalho (Ativo e Data).
-FROZEN_COLUMNS = {"Resumo": 1, "Candles": 2, "Indicadores": 2, "Regimes": 2}
+FROZEN_COLUMNS = {"Resumo": 1, "Candles": 2, "Indicadores": 2, "Regimes": 2, "Backtest": 2}
 
 GREEN, YELLOW, RED = "#C6EFCE", "#FFEB9C", "#FFC7CE"
 GREEN_TEXT, RED_TEXT = "#006100", "#9C0006"
@@ -91,6 +111,7 @@ def write_report(data: ReportData, path: Path) -> Path:
         ("Indicadores", indicators_frame(data)),
         ("Regimes", regimes_frame(data)),
         ("Mudanças", regime_changes_frame(data)),
+        ("Backtest", backtest_frame(data)),
         ("Qualidade", quality_frame(data)),
     ]
     about = about_frame(data)
