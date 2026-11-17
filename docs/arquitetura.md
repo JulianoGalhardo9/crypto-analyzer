@@ -32,15 +32,16 @@ src/crypto_analyzer/
     tables.py        # bronze, silver, quality_issues, dim_ativo, fact_indicador, fact_regime
     repositories.py  # leitura/escrita (bronze, silver em upsert, qualidade)
   interfaces/        # CLI, bot, API
+    airflow_callbacks.py  # on_failure_callback das DAGs (não importa o Airflow)
     cli.py           # `crypto-analyzer coletar`, `processar`, `calcular` e `analisar`
 tests/
   unit/              # test_package, test_mercado_bitcoin_client, test_silver, test_quality, test_indicators, test_regime, test_gold, test_explainer, test_analysis, test_trend_and_levels, test_cli, test_report_frames, test_report_excel (report_data.py: dados sintéticos compartilhados)
   fixtures/          # respostas reais gravadas da API
   conftest.py        # backend asyncio para os testes async
   integration/       # banco real (Postgres do Docker); API sempre simulada
-  dags/              # (vazio) integridade das DAGs (etapa 10)
+  dags/              # integridade das DAGs com DagBag (conftest aponta AIRFLOW_HOME para pasta temporária)
 dags/
-  bronze_ingestion.py  # coleta diária API -> bronze (chama pipeline/bronze.collect_candles)
+  daily_pipeline.py  # 00:15 UTC: coleta (mapeada, 1 por vez) -> silver (mapeada) -> gold -> alerta de regime
 config/              # assets.yaml (com nomes e benchmark), quality.yaml, regimes.yaml, report.yaml
 docker/
   airflow/
