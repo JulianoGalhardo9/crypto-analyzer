@@ -6,14 +6,13 @@ from typing import Annotated
 import typer
 
 from crypto_analyzer.config import (
-    Settings,
     load_assets,
     load_quality_config,
     load_regime_config,
     load_report_config,
 )
 from crypto_analyzer.core.explainer import explain, explain_details, unsupported_asset_message
-from crypto_analyzer.infra.db import make_engine, make_session_factory
+from crypto_analyzer.infra.db import session_factory_from_settings
 from crypto_analyzer.pipeline.bronze import collect_candles
 from crypto_analyzer.pipeline.build_analysis import NoDataError, build_analysis
 from crypto_analyzer.pipeline.build_report import build_report_data
@@ -46,7 +45,7 @@ def coletar(
         )
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    session_factory = make_session_factory(make_engine(Settings().database_url))  # type: ignore[call-arg]
+    session_factory = session_factory_from_settings()
     try:
         saved = collect_candles(
             session_factory,
@@ -75,7 +74,7 @@ def processar(
         )
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    session_factory = make_session_factory(make_engine(Settings().database_url))  # type: ignore[call-arg]
+    session_factory = session_factory_from_settings()
     summaries = process_silver(
         session_factory, load_assets().symbols, resolucao, datetime.now(UTC), load_quality_config()
     )
@@ -93,7 +92,7 @@ def processar(
 def calcular() -> None:
     """Calcula indicadores e regimes (gold) a partir da silver e grava no banco."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    session_factory = make_session_factory(make_engine(Settings().database_url))  # type: ignore[call-arg]
+    session_factory = session_factory_from_settings()
     try:
         summaries = process_gold(session_factory, load_assets(), load_regime_config())
     except ValueError as error:
@@ -119,7 +118,7 @@ def analisar(
         typer.echo(unsupported_asset_message())
         raise typer.Exit(code=1)
 
-    session_factory = make_session_factory(make_engine(Settings().database_url))  # type: ignore[call-arg]
+    session_factory = session_factory_from_settings()
     try:
         analysis = build_analysis(
             session_factory,
@@ -143,7 +142,7 @@ def planilha(
     pasta: Annotated[Path, typer.Option(help="Pasta onde o .xlsx é salvo.")] = Path("output"),
 ) -> None:
     """Gera a planilha Excel com a análise completa dos ativos."""
-    session_factory = make_session_factory(make_engine(Settings().database_url))  # type: ignore[call-arg]
+    session_factory = session_factory_from_settings()
     now = datetime.now(UTC)
     try:
         data = build_report_data(
