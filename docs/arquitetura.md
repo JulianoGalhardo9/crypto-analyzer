@@ -38,15 +38,21 @@ tests/
   fixtures/          # respostas reais gravadas da API
   conftest.py        # backend asyncio para os testes async
   integration/       # banco real (Postgres do Docker); API sempre simulada
-  dags/              # (vazio) integridade das DAGs
-dags/                # (vazio) DAGs do Airflow
+  dags/              # (vazio) integridade das DAGs (etapa 10)
+dags/
+  bronze_ingestion.py  # coleta diária API -> bronze (chama pipeline/bronze.collect_candles)
 config/              # assets.yaml (com nomes e benchmark), quality.yaml, regimes.yaml, report.yaml
-docker/              # (vazio)
+docker/
+  airflow/
+    Dockerfile       # apache/airflow:3.4.0-python3.12 + crypto-analyzer (editável)
+    compose.yaml     # Airflow 3.4 (LocalExecutor), perfil "airflow", incluído pelo docker-compose.yml
+airflow/             # logs e airflow.cfg gerados pelo Airflow (no .gitignore)
 docs/                # esta documentação
 .github/workflows/ci.yml
 migrations/          # Alembic (0001 bronze, 0002 silver e qualidade, 0003 gold)
 alembic.ini
-docker-compose.yml   # Postgres 16 (porta 5433 no host)
+docker-compose.yml   # Postgres 16 do projeto (porta 5433 no host) + include do Airflow
+.dockerignore        # a imagem só recebe pyproject, README, src/ e config/
 ```
 
 ## Regras que valem desde já

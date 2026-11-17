@@ -11,7 +11,8 @@ dependencies = [
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.16.2",
     "pyyaml>=6.0.3",
-    "sqlalchemy>=2.1.6",
+    # Mesma faixa do Airflow 3.4 (que fixa 2.0.x): o pacote roda dentro da imagem dele.
+    "sqlalchemy>=2.0.50,<2.1",
     "typer>=0.27.3",
     "xlsxwriter>=3.3.1",
 ]

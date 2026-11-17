@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -15,8 +14,7 @@ from crypto_analyzer.config import (
 )
 from crypto_analyzer.core.explainer import explain, explain_details, unsupported_asset_message
 from crypto_analyzer.infra.db import make_engine, make_session_factory
-from crypto_analyzer.infra.mercado_bitcoin import MercadoBitcoinClient
-from crypto_analyzer.pipeline.bronze import ingest_candles
+from crypto_analyzer.pipeline.bronze import collect_candles
 from crypto_analyzer.pipeline.build_analysis import NoDataError, build_analysis
 from crypto_analyzer.pipeline.build_report import build_report_data
 from crypto_analyzer.pipeline.market_data import MarketDataError
@@ -49,16 +47,14 @@ def coletar(
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     session_factory = make_session_factory(make_engine(Settings().database_url))  # type: ignore[call-arg]
-    symbols = load_assets().symbols
-
-    async def run() -> dict[str, int]:
-        async with MercadoBitcoinClient() as client:
-            return await ingest_candles(
-                client, session_factory, symbols, resolucao, to=datetime.now(UTC), countback=candles
-            )
-
     try:
-        saved = asyncio.run(run())
+        saved = collect_candles(
+            session_factory,
+            load_assets().symbols,
+            resolucao,
+            to=datetime.now(UTC),
+            countback=candles,
+        )
     except MarketDataError as error:
         typer.echo(
             f"Não consegui coletar: {error}.\n"

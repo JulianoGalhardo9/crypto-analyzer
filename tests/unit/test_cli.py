@@ -7,6 +7,7 @@ from typer.testing import CliRunner
 
 from crypto_analyzer.interfaces import cli
 from crypto_analyzer.interfaces.cli import app
+from crypto_analyzer.pipeline import bronze
 from crypto_analyzer.pipeline.build_analysis import NoDataError
 from crypto_analyzer.pipeline.market_data import MarketDataError
 from tests.unit.report_data import build_report_data
@@ -54,7 +55,7 @@ class DownClient:
 def test_coletar_explains_a_failing_api_instead_of_dumping_a_traceback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(cli, "MercadoBitcoinClient", DownClient)
+    monkeypatch.setattr(bronze, "MercadoBitcoinClient", DownClient)
 
     result = runner.invoke(app, ["coletar"])
 
