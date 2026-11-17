@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from crypto_analyzer.core.models import Regime
@@ -86,3 +86,15 @@ class ReportConfig(BaseModel):
 
 def load_report_config(path: Path = REPORT_PATH) -> ReportConfig:
     return ReportConfig.model_validate(yaml.safe_load(path.read_text()))
+
+
+BACKTEST_PATH = Path(__file__).parents[2] / "config" / "backtest.yaml"
+
+
+class BacktestConfig(BaseModel):
+    min_sample: int = Field(ge=1)
+    horizons_days: list[int] = Field(min_length=1)
+
+
+def load_backtest_config(path: Path = BACKTEST_PATH) -> BacktestConfig:
+    return BacktestConfig.model_validate(yaml.safe_load(path.read_text()))

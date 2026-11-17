@@ -13,6 +13,7 @@ from crypto_analyzer.infra.db import make_engine
 from crypto_analyzer.infra.tables import (
     BronzeCandlesRaw,
     DimAtivo,
+    FactBacktest,
     FactIndicador,
     FactRegime,
     QualityIssueRow,
@@ -54,6 +55,7 @@ def session(engine: Engine) -> Iterator[Session]:
     """Sessão com todas as tabelas de teste limpas, para cada teste começar do zero."""
     with Session(engine, expire_on_commit=False) as session:
         # Chaves estrangeiras: apaga-se primeiro quem referencia (gold, depois silver).
+        session.execute(delete(FactBacktest))
         session.execute(delete(FactIndicador))
         session.execute(delete(FactRegime))
         session.execute(delete(DimAtivo))

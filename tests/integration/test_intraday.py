@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import Engine, func, select, update
 from sqlalchemy.orm import Session
 
-from crypto_analyzer.config import QualityConfig, load_regime_config
+from crypto_analyzer.config import QualityConfig, load_backtest_config, load_regime_config
 from crypto_analyzer.core.models import Regime
 from crypto_analyzer.infra.db import make_session_factory
 from crypto_analyzer.infra.repositories import load_latest_regime, save_raw_candles
@@ -25,7 +25,7 @@ QUALITY = QualityConfig(outlier_threshold=10.0, max_age_hours={"1d": 48, "1h": 8
 def prepare(engine: Engine, session: Session) -> dict[str, Regime]:
     seed_silver(session, "BTC-BRL", seed=1)
     seed_silver(session, "SOL-BRL", seed=2)
-    process_gold(make_session_factory(engine), ASSETS, load_regime_config())
+    process_gold(make_session_factory(engine), ASSETS, load_regime_config(), load_backtest_config())
     return {s: Regime(load_latest_regime(session, s) or "high") for s in ASSETS.symbols}
 
 

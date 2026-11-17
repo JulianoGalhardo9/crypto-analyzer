@@ -161,6 +161,18 @@ Formato: decisão, motivo e alternativa descartada.
 - **`bronze_ingestion` removida** — era o "primeiro contato" da etapa 9; a `daily_pipeline` faz a mesma coleta e mais.
 - **Airflow instalado no grupo `airflow` do `uv` (padrão junto com `dev`)** — o teste de integridade usa o `DagBag` de verdade, na mesma versão da imagem (3.4.0). O `conftest.py` aponta o `AIRFLOW_HOME` para uma pasta temporária: importar o Airflow cria `~/airflow` sozinho.
 
+## Backtest (etapa 11)
+
+- **Amostra mínima 20, sinais RSI 70/30 e cruzamento da média de 200, horizontes 7 e 30 dias** — decisões do autor (2026-11-17), tomadas olhando a contagem real de ocorrências independentes por ativo. Com 20, o BTC tem todos os sinais; ETH e SOL vários "amostra pequena". Descartados: 30 (quase só o BTC passaria) e 10 (médias pouco confiáveis num mercado tão volátil).
+- **Sinal = dia do cruzamento**, não todos os dias acima do limite; exige o indicador ontem e hoje (dias sem indicador nunca são sinal).
+- **Ocorrências independentes por agrupamento**: um sinal contado "cobre" os sinais dos `horizon_days` seguintes; o total bruto também é guardado. É a regra do CLAUDE.md para não contar o mesmo movimento várias vezes.
+- **Retorno em dias de calendário** (`asfreq("D")`): se faltar o candle do fim do horizonte, aquele evento fica sem resultado em vez de usar outro dia sem avisar.
+- **Linha de base = qualquer dia, mesmo horizonte, mesma série** — sem ela "+6%" não diz nada (num ativo que sobe, quase todo sinal "acerta").
+- **Média, mediana e taxa de alta** — cripto tem caudas gordas; a mediana mostra quando a média é puxada por poucos casos extremos.
+- **Sem teste estatístico de significância** — o sistema descreve; diferenças são reportadas ao lado da base e da amostra, nunca como "funciona" ou "não funciona" com certeza.
+- **Calculado dentro do `process_gold`** — `calcular` e a `daily_pipeline` mantêm o backtest atualizado sem tarefa nova. Linhas do ativo são substituídas a cada cálculo (horizonte removido do YAML não deixa linha velha).
+- **Limites do RSI (70/30) em `core/indicators.py`** — compartilhados pelo texto e pelo backtest; são a convenção de Wilder, não parâmetros ajustados aos dados.
+
 ## Idioma
 
 - **Comentários e docstrings em português; nomes de código e commits em inglês** — o projeto é de estudo e os comentários servem de explicação para o autor; o inglês nos nomes e commits mantém o padrão do mercado e do portfólio.

@@ -124,6 +124,31 @@ class FactIndicador(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class FactBacktest(Base):
+    """Gold: o que aconteceu depois de cada sinal, por ativo, sinal e horizonte (etapa 11)."""
+
+    __tablename__ = "fact_backtest"
+
+    ativo_id: Mapped[int] = mapped_column(ForeignKey("dim_ativo.id"), primary_key=True)
+    signal: Mapped[str] = mapped_column(String(30), primary_key=True)
+    horizon_days: Mapped[int] = mapped_column(Integer, primary_key=True)
+    # Último dia (fechado) de dados usado no cálculo.
+    data_until: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    raw_count: Mapped[int] = mapped_column(Integer)
+    independent_count: Mapped[int] = mapped_column(Integer)
+    evaluated_count: Mapped[int] = mapped_column(Integer)
+    min_sample: Mapped[int] = mapped_column(Integer)
+    enough_sample: Mapped[bool] = mapped_column(Boolean)
+    mean_return: Mapped[float | None] = mapped_column(Float)
+    median_return: Mapped[float | None] = mapped_column(Float)
+    hit_rate: Mapped[float | None] = mapped_column(Float)
+    baseline_mean: Mapped[float | None] = mapped_column(Float)
+    baseline_hit_rate: Mapped[float | None] = mapped_column(Float)
+    first_event: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_event: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class FactRegime(Base):
     """Gold: volatilidade e regime por ativo e dia. `regime` já inclui a histerese."""
 

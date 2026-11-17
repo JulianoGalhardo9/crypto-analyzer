@@ -12,6 +12,7 @@ src/crypto_analyzer/
     trend.py         # classify_trend
     regime.py        # volatilidade realizada, percentil, classificação, histerese, mudanças novas
     refresh.py       # refresh_due: hora de atualizar os candles de 1h?
+    backtest.py      # sinais, retorno em dias de calendário, ocorrências independentes, linha de base
     indicators.py    # sma, ema, rsi, macd, true_range, atr, bollinger, log_returns, rolling_correlation
   pipeline/          # bronze -> silver -> gold, qualidade
     bronze.py        # ingest_candles: API -> bronze
@@ -32,7 +33,7 @@ src/crypto_analyzer/
   infra/             # API do Mercado Bitcoin, banco, Telegram
     mercado_bitcoin.py  # cliente httpx async (implementa MarketDataClient)
     db.py            # engine e sessões SQLAlchemy
-    tables.py        # bronze, silver, quality_issues, dim_ativo, fact_indicador, fact_regime
+    tables.py        # bronze, silver, quality_issues, dim_ativo, fact_indicador, fact_regime, fact_backtest
     repositories.py  # leitura/escrita (bronze, silver em upsert, qualidade)
   interfaces/        # CLI, bot, API
     airflow_callbacks.py  # on_failure_callback das DAGs (não importa o Airflow)
@@ -47,7 +48,7 @@ dags/
   intraday_refresh.py  # aos 5 min de cada hora: short-circuit decide quem atualiza (1h/3h/6h pelo regime) -> candles 1h
   daily_report.py  # roda após cada atualização do gold (Asset crypto_gold): gera o .xlsx em output/
   daily_pipeline.py  # 00:15 UTC: coleta (mapeada, 1 por vez) -> silver (mapeada) -> gold -> alerta de regime
-config/              # assets.yaml (com nomes e benchmark), quality.yaml, regimes.yaml, report.yaml
+config/              # assets.yaml (com nomes e benchmark), quality.yaml, regimes.yaml, report.yaml, backtest.yaml
 docker/
   airflow/
     Dockerfile       # apache/airflow:3.4.0-python3.12 + crypto-analyzer (editável)
@@ -55,7 +56,7 @@ docker/
 airflow/             # logs e airflow.cfg gerados pelo Airflow (no .gitignore)
 docs/                # esta documentação
 .github/workflows/ci.yml
-migrations/          # Alembic (0001 bronze, 0002 silver e qualidade, 0003 gold)
+migrations/          # Alembic (0001 bronze, 0002 silver e qualidade, 0003 gold, 0004 fact_backtest)
 alembic.ini
 docker-compose.yml   # Postgres 16 do projeto (porta 5433 no host) + include do Airflow
 .dockerignore        # a imagem só recebe pyproject, README, src/ e config/

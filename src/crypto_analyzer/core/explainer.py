@@ -4,13 +4,11 @@ Regras (ver CLAUDE.md): sem jargão sem explicar, nunca mandar comprar ou vender
 prever preço, e dizer quando falta histórico ou o dado está velho em vez de fingir precisão.
 """
 
+from crypto_analyzer.core.indicators import RSI_HIGH, RSI_LOW
 from crypto_analyzer.core.models import Analysis, CorrelationLevel, Regime, RegimeChange, Trend
 
 DISCLAIMER = "⚠️ Informativo, não é recomendação de investimento."
 
-# Limites clássicos do RSI (Wilder): acima de 70 subiu rápido demais; abaixo de 30, caiu.
-RSI_HIGH = 70
-RSI_LOW = 30
 # Leitura usual da força da correlação em estatística. Para estes ativos a correlação com o
 # BTC é sempre alta (medido), por isso o texto também diz como ela está em relação ao normal.
 CORR_STRONG = 0.7

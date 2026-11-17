@@ -8,10 +8,12 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from crypto_analyzer.config import AssetsConfig
+from crypto_analyzer.core.backtest import BacktestResult
 from crypto_analyzer.infra.tables import (
     Base,
     BronzeCandlesRaw,
     DimAtivo,
+    FactBacktest,
     FactIndicador,
     FactRegime,
     QualityIssueRow,
@@ -233,4 +235,37 @@ def load_latest_regime(session: Session, symbol: str) -> str | None:
         .where(DimAtivo.symbol == symbol, FactRegime.regime.is_not(None))
         .order_by(FactRegime.ts.desc())
         .limit(1)
+    )
+
+
+def replace_backtests(
+    session: Session,
+    ativo_id: int,
+    results: Sequence[BacktestResult],
+    data_until: datetime,
+    min_sample: int,
+) -> None:
+    """Troca os resultados do ativo pelos novos (como a qualidade): se um horizonte sair do
+    YAML, a linha antiga não fica para trás."""
+    session.execute(delete(FactBacktest).where(FactBacktest.ativo_id == ativo_id))
+    session.add_all(
+        FactBacktest(
+            ativo_id=ativo_id,
+            signal=str(r.signal),
+            horizon_days=r.horizon_days,
+            data_until=data_until,
+            raw_count=r.raw_count,
+            independent_count=r.independent_count,
+            evaluated_count=r.evaluated_count,
+            min_sample=min_sample,
+            enough_sample=r.enough_sample,
+            mean_return=r.mean_return,
+            median_return=r.median_return,
+            hit_rate=r.hit_rate,
+            baseline_mean=r.baseline_mean,
+            baseline_hit_rate=r.baseline_hit_rate,
+            first_event=r.first_event,
+            last_event=r.last_event,
+        )
+        for r in results
     )

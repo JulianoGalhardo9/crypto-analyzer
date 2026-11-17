@@ -255,7 +255,7 @@ Resolver na etapa indicada, registrar a decisão aqui e **perguntar ao autor ant
 - **Decidido (2026-10-28): o "dia" é UTC**, igual à API, que entrega candles diários à 00:00 UTC. Todos os timestamps do projeto ficam em UTC; qualquer conversão para o horário de Brasília é só na exibição
 - **Decidido (2026-11-03, delegado ao Claude): "últimas 24h" = variação do último dia fechado** (fechamento contra o fechamento anterior), com a data na resposta. Sem candles horários coletados não existe janela móvel de 24h de verdade; escrever "24h" seria fingir precisão. Pode mudar quando os candles horários entrarem (etapa 10)
 - **Decidido (2026-10-29, delegado ao Claude, medido nos dados reais): percentil em janela móvel de 365 dias** (mínimo de 180 valores), volatilidade realizada de 30 dias, cortes 33/66 e **histerese de 5 dias** (ver `docs/decisoes.md`). O percentil crescente inclinava tudo para "calma" (SOL 57%)
-- **Amostra mínima do backtest:** quantas ocorrências independentes? (etapa 11)
+- **Decidido (2026-11-17): backtest** com **amostra mínima de 20** ocorrências independentes, sinais **RSI acima de 70 / abaixo de 30** e **cruzamento do preço com a média de 200 dias** (para cima e para baixo), horizontes de **7 e 30 dias** (`config/backtest.yaml`)
 - **Decidido (2026-11-17): frequência do `intraday_refresh`** = checagem de hora em hora (aos 5 min, logo após o candle de 1h fechar); cada ativo atualiza a cada 1h (alta), 3h (normal) ou 6h (calma). O limite da API (1 req/s) não é gargalo: são 3 requisições por atualização
 - **Decidido (2026-11-03): limite de "dado velho"** reaproveita `max_age_hours` de `config/quality.yaml` (48 h para candles diários)
 
