@@ -260,7 +260,7 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 
 ### Etapa 11 — Backtest dos sinais, PR A: cálculo, tabela e execução real
 - Decisões do autor (2026-11-17), tomadas sobre a contagem real de ocorrências independentes: amostra mínima 20, sinais RSI 70/30 e cruzamento da média de 200 dias, horizontes 7 e 30 dias (`config/backtest.yaml`).
-- Commits `1222dc1`, `0cbeb60`.
+- PR #21. Commits `1222dc1`, `0cbeb60`.
 - `core/backtest.py` (puro): `signal_events`, `forward_returns` (dias de calendário), `independent_events`, `evaluate`, `run_backtest`. Migration `0004` (gerada, lida e aplicada no banco real): `fact_backtest` com chave (ativo, sinal, horizonte). `process_gold` calcula e substitui os resultados de cada ativo.
 - **Erro meu no teste, corrigido antes do commit:** o primeiro teste de "buraco nos candles" tinha expectativas erradas e comentários provisórios; refeito com a conta certa (01/01 + 2 dias cai num dia sem candle → vazio; 02/01 + 2 dias → 130/110 − 1).
 - 13 testes novos (total 299): sinais à mão (só o dia do cruzamento, média de 200 exigida nos dois dias, RSI desconhecido), retorno com buraco, agrupamento, amostra pequena sem média mas com linha de base, média/mediana/taxa à mão, eventos sem futuro, YAML; integração (16 linhas, iguais ao cálculo puro, repetir não duplica, horizonte removido some).
