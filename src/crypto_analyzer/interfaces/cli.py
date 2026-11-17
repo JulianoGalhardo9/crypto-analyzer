@@ -1,18 +1,28 @@
 import asyncio
 import logging
 from datetime import UTC, datetime
+from pathlib import Path
+from typing import Annotated
 
 import typer
 
-from crypto_analyzer.config import Settings, load_assets, load_quality_config, load_regime_config
+from crypto_analyzer.config import (
+    Settings,
+    load_assets,
+    load_quality_config,
+    load_regime_config,
+    load_report_config,
+)
 from crypto_analyzer.core.explainer import explain, explain_details, unsupported_asset_message
 from crypto_analyzer.infra.db import make_engine, make_session_factory
 from crypto_analyzer.infra.mercado_bitcoin import MercadoBitcoinClient
 from crypto_analyzer.pipeline.bronze import ingest_candles
 from crypto_analyzer.pipeline.build_analysis import NoDataError, build_analysis
+from crypto_analyzer.pipeline.build_report import build_report_data
 from crypto_analyzer.pipeline.market_data import MarketDataError
 from crypto_analyzer.pipeline.process import process_silver
 from crypto_analyzer.pipeline.process_gold import process_gold
+from crypto_analyzer.reports.excel import default_report_path, write_report
 
 app = typer.Typer(help="Análise simples de BTC, ETH e SOL.", no_args_is_help=True)
 
@@ -130,3 +140,29 @@ def analisar(
         )
         raise typer.Exit(code=1) from None
     typer.echo(explain_details(analysis) if detalhes else explain(analysis))
+
+
+@app.command()
+def planilha(
+    pasta: Annotated[Path, typer.Option(help="Pasta onde o .xlsx é salvo.")] = Path("output"),
+) -> None:
+    """Gera a planilha Excel com a análise completa dos ativos."""
+    session_factory = make_session_factory(make_engine(Settings().database_url))  # type: ignore[call-arg]
+    now = datetime.now(UTC)
+    try:
+        data = build_report_data(
+            session_factory,
+            load_assets(),
+            now,
+            load_quality_config(),
+            load_regime_config(),
+            load_report_config(),
+        )
+    except NoDataError as error:
+        typer.echo(
+            f"Não dá para gerar a planilha: {error}. Rode, nesta ordem: "
+            "crypto-analyzer coletar, processar e calcular."
+        )
+        raise typer.Exit(code=1) from None
+    path = write_report(data, default_report_path(pasta, now))
+    typer.echo(f"Planilha gerada: {path}")
