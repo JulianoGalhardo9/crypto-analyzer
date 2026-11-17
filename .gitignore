@@ -24,6 +24,7 @@ htmlcov/
 # Airflow / Docker local data
 airflow/logs/
 airflow/plugins/
+airflow/config/
 docker/data/
 *.log
 

@@ -1,0 +1,7 @@
+# A imagem do Airflow só precisa do pacote e da configuração (lista de permissões).
+*
+!pyproject.toml
+!README.md
+!src/
+!config/
+**/__pycache__

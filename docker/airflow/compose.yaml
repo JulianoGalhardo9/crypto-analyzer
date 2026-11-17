@@ -1,0 +1,134 @@
+# Airflow 3.4.0, a partir do docker-compose.yaml oficial da documentação dessa versão.
+# Diferenças em relação ao oficial (ver docs/decisoes.md):
+# - LocalExecutor no lugar do CeleryExecutor: sem Redis, sem worker e sem flower;
+# - sem triggerer: ele só roda tarefas "adiáveis" (deferrable), que o projeto não usa;
+# - banco de metadados próprio (airflow-postgres), separado do banco do projeto (postgres);
+# - imagem própria com o pacote crypto-analyzer (Dockerfile ao lado);
+# - perfil "airflow": `docker compose up -d` sobe só o Postgres do projeto;
+#   o Airflow sobe com `docker compose --profile airflow up -d`.
+# Caminhos relativos são a partir desta pasta (docker/airflow).
+
+x-airflow-common: &airflow-common
+  # Só o airflow-init constrói a imagem; os outros usam a mesma, sem tentar baixá-la.
+  image: crypto-analyzer-airflow:3.4.0
+  pull_policy: never
+  profiles: [airflow]
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    # O LocalExecutor abre `parallelism` processos de uma vez no Linux; o padrão (32) pesa
+    # na memória e o projeto tem no máximo 3 tarefas ao mesmo tempo (uma por ativo).
+    AIRFLOW__CORE__PARALLELISM: "4"
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg://airflow:airflow@airflow-postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY:-}
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-apiserver:8080/execution/
+    AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW_JWT_SECRET:-airflow_jwt_secret}
+    AIRFLOW__API_AUTH__JWT_ISSUER: airflow
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
+    AIRFLOW_CONFIG: /opt/airflow/config/airflow.cfg
+    # Banco do PROJETO (onde as tarefas gravam bronze/silver/gold), pela rede do compose.
+    DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-crypto}:${POSTGRES_PASSWORD:-crypto}@postgres:5432/${POSTGRES_DB:-crypto_analyzer}
+  volumes:
+    - ../../dags:/opt/airflow/dags
+    - ../../airflow/logs:/opt/airflow/logs
+    - ../../airflow/config:/opt/airflow/config
+    - ../../src:/opt/crypto-analyzer/src:ro
+    - ../../config:/opt/crypto-analyzer/config:ro
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on: &airflow-common-depends-on
+    airflow-postgres:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+
+services:
+  airflow-postgres:
+    image: postgres:16
+    profiles: [airflow]
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+
+  airflow-apiserver:
+    <<: *airflow-common
+    command: api-server
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/monitor/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    command: dag-processor
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  # Migra o banco de metadados e cria o usuário da interface (airflow/airflow, só local).
+  airflow-init:
+    <<: *airflow-common
+    build:
+      context: ../..
+      dockerfile: docker/airflow/Dockerfile
+    pull_policy: build
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        mkdir -v -p /opt/airflow/{logs,dags,config}
+        /entrypoint airflow version
+        /entrypoint airflow config list >/dev/null
+        chown -R "${AIRFLOW_UID:-50000}:0" /opt/airflow/{logs,dags,config}
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_WWW_USER:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_WWW_PASSWORD:-airflow}
+    user: "0:0"
+
+volumes:
+  airflow_postgres_data:

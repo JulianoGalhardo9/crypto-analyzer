@@ -1,3 +1,7 @@
+# Airflow (perfil "airflow"): docker compose --profile airflow up -d
+include:
+  - docker/airflow/compose.yaml
+
 services:
   postgres:
     image: postgres:16
