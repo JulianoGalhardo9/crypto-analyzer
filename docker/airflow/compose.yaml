@@ -30,12 +30,15 @@ x-airflow-common: &airflow-common
     AIRFLOW_CONFIG: /opt/airflow/config/airflow.cfg
     # Banco do PROJETO (onde as tarefas gravam bronze/silver/gold), pela rede do compose.
     DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-crypto}:${POSTGRES_PASSWORD:-crypto}@postgres:5432/${POSTGRES_DB:-crypto_analyzer}
+    # Planilhas da DAG daily_report: a pasta output/ do projeto, montada abaixo.
+    OUTPUT_DIR: /opt/crypto-analyzer/output
   volumes:
     - ../../dags:/opt/airflow/dags
     - ../../airflow/logs:/opt/airflow/logs
     - ../../airflow/config:/opt/airflow/config
     - ../../src:/opt/crypto-analyzer/src:ro
     - ../../config:/opt/crypto-analyzer/config:ro
+    - ../../output:/opt/crypto-analyzer/output
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on: &airflow-common-depends-on
     airflow-postgres:

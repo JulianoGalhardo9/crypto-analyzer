@@ -1,10 +1,14 @@
-"""Callbacks usados pelas DAGs. Não importam o Airflow: recebem o "contexto" como dicionário."""
+"""Peças usadas pelas DAGs, sem importar o Airflow: callbacks e identificadores de Assets."""
 
 import logging
 from collections.abc import Mapping
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# Asset do gold: a daily_pipeline o atualiza e a daily_report roda depois de cada atualização.
+# O prefixo "x-" é o recomendado pelo Airflow para identificadores próprios (sem semântica).
+GOLD_ASSET_URI = "x-crypto-analyzer://gold"
 
 
 def failure_message(context: Mapping[str, Any]) -> str:

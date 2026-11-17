@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from airflow.dag_processing.dagbag import DagBag
 
-from crypto_analyzer.interfaces.airflow_callbacks import notify_task_failure
+from crypto_analyzer.interfaces.airflow_callbacks import GOLD_ASSET_URI, notify_task_failure
 
 DAGS_FOLDER = Path(__file__).parent.parent.parent / "dags"
 
@@ -22,7 +22,7 @@ def test_every_dag_imports_without_errors(dagbag: DagBag) -> None:
 
 
 def test_expected_dags_exist(dagbag: DagBag) -> None:
-    assert set(dagbag.dag_ids) == {"daily_pipeline"}
+    assert set(dagbag.dag_ids) == {"daily_pipeline", "daily_report"}
 
 
 def test_every_task_retries_and_alerts_on_failure(dagbag: DagBag) -> None:
@@ -59,3 +59,13 @@ def test_ingestion_runs_one_asset_at_a_time(dagbag: DagBag) -> None:
 
     assert dag.get_task("ingest").max_active_tis_per_dagrun == 1
     assert dag.get_task("silver").max_active_tis_per_dagrun is None
+
+
+def test_report_runs_after_each_gold_update(dagbag: DagBag) -> None:
+    """Agendamento por dados: a tarefa gold emite o Asset que dispara a daily_report."""
+    [outlet] = dagbag.dags["daily_pipeline"].get_task("gold").outlets
+    assert outlet.uri == GOLD_ASSET_URI
+
+    timetable = dagbag.dags["daily_report"].timetable
+    assert timetable.asset_triggered
+    assert [asset.uri for asset in timetable.asset_condition.objects] == [GOLD_ASSET_URI]

@@ -41,6 +41,7 @@ tests/
   integration/       # banco real (Postgres do Docker); API sempre simulada
   dags/              # integridade das DAGs com DagBag (conftest aponta AIRFLOW_HOME para pasta temporária)
 dags/
+  daily_report.py  # roda após cada atualização do gold (Asset crypto_gold): gera o .xlsx em output/
   daily_pipeline.py  # 00:15 UTC: coleta (mapeada, 1 por vez) -> silver (mapeada) -> gold -> alerta de regime
 config/              # assets.yaml (com nomes e benchmark), quality.yaml, regimes.yaml, report.yaml
 docker/
