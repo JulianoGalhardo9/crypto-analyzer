@@ -152,6 +152,12 @@ Formato: decisão, motivo e alternativa descartada.
 - **Telegram com `httpx` direto (só `sendMessage`)** — já é dependência; o `python-telegram-bot` entra na etapa 12, para o bot. O token faz parte da URL, então os erros são reescritos sem a mensagem original do httpx. Sem token, o alerta vai para o log.
 - **`daily_report` agendada pelo Asset do gold, não por horário** — roda logo depois de cada gold bem-sucedido; se a pipeline atrasar ou falhar, a planilha não sai com dados velhos. Identificador `x-crypto-analyzer://gold` (o prefixo `x-` é o indicado pela documentação para nomes próprios) definido uma vez em `interfaces/airflow_callbacks.py`, sem importar o Airflow. Na 3.4 o primeiro argumento posicional de `Asset` é `name`; por isso `Asset(name=..., uri=...)`.
 - **Planilha não é enviada ao Telegram (por enquanto)** — o envio de arquivo é "opcional" no CLAUDE.md e não poderia ser verificado sem bot; o `/planilha` do bot (etapa 12) cobre isso.
+- **`intraday_refresh`: decisão como `@task.short_circuit` que devolve a lista de ativos** — lista vazia ("nada nesta hora") marca a atualização como *skipped*; lista cheia vira a entrada do `.expand()`. Uma tarefa só faz as duas coisas.
+- **Horas cheias, não minutos** — a checagem roda aos 5 min de cada hora e a coleta anterior também; comparando minutos, 01:05:30 → 02:05:02 daria 59 min e o ativo em "alta" pularia uma hora.
+- **Sem regime conhecido, intervalo de "alta"** — com histórico curto não há percentil; atualizar mais vezes custa no máximo 3 requisições por hora.
+- **1 retry no `intraday_refresh`** — a próxima checagem vem em 1 hora; `max_active_runs=1` evita duas execuções coletando o mesmo ativo.
+- **Limite de dado velho de 1h: 3 h → 8 h (`config/quality.yaml`)** — com 3 h, todo ativo em calma (atualizado a cada 6 h) apareceria como "atrasado" entre duas atualizações normais.
+- **`refresh_hours` em `config/regimes.yaml`, chaveado pelo `Regime`** — o `RegimeConfig` valida que os nomes são `calm`/`normal`/`high`; o cálculo do regime ignora esse campo (`model_dump(exclude=...)`).
 - **`bronze_ingestion` removida** — era o "primeiro contato" da etapa 9; a `daily_pipeline` faz a mesma coleta e mais.
 - **Airflow instalado no grupo `airflow` do `uv` (padrão junto com `dev`)** — o teste de integridade usa o `DagBag` de verdade, na mesma versão da imagem (3.4.0). O `conftest.py` aponta o `AIRFLOW_HOME` para uma pasta temporária: importar o Airflow cria `~/airflow` sozinho.
 
