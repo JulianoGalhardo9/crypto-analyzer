@@ -150,6 +150,8 @@ Formato: decisão, motivo e alternativa descartada.
 - **Alerta numa tarefa separada do gold** — se o Telegram falhar, o retry não recalcula o gold. O gold devolve só textos (XCom pequeno), nunca DataFrames.
 - **Callback de falha em `interfaces/airflow_callbacks.py`, sem importar o Airflow** — recebe o contexto como dicionário, então é testável sem o Airflow. Nunca levanta exceção (um erro no callback só aparece no log do dag-processor e esconderia a falha original).
 - **Telegram com `httpx` direto (só `sendMessage`)** — já é dependência; o `python-telegram-bot` entra na etapa 12, para o bot. O token faz parte da URL, então os erros são reescritos sem a mensagem original do httpx. Sem token, o alerta vai para o log.
+- **`daily_report` agendada pelo Asset do gold, não por horário** — roda logo depois de cada gold bem-sucedido; se a pipeline atrasar ou falhar, a planilha não sai com dados velhos. Identificador `x-crypto-analyzer://gold` (o prefixo `x-` é o indicado pela documentação para nomes próprios) definido uma vez em `interfaces/airflow_callbacks.py`, sem importar o Airflow. Na 3.4 o primeiro argumento posicional de `Asset` é `name`; por isso `Asset(name=..., uri=...)`.
+- **Planilha não é enviada ao Telegram (por enquanto)** — o envio de arquivo é "opcional" no CLAUDE.md e não poderia ser verificado sem bot; o `/planilha` do bot (etapa 12) cobre isso.
 - **`bronze_ingestion` removida** — era o "primeiro contato" da etapa 9; a `daily_pipeline` faz a mesma coleta e mais.
 - **Airflow instalado no grupo `airflow` do `uv` (padrão junto com `dev`)** — o teste de integridade usa o `DagBag` de verdade, na mesma versão da imagem (3.4.0). O `conftest.py` aponta o `AIRFLOW_HOME` para uma pasta temporária: importar o Airflow cria `~/airflow` sozinho.
 
