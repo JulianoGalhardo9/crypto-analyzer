@@ -267,6 +267,14 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - **Execução real (`calcular`, dados até 2026-10-28), lida do banco:** 24 resultados (3 ativos × 4 sinais × 2 horizontes); 12 com amostra suficiente (BTC 8 de 8, ETH 3 de 8, SOL 1 de 8). Exemplos: BTC, RSI acima de 70 → 84 ocorrências independentes, 7 dias depois média +6,1% (qualquer dia: +1,6%), subiu em 73% (qualquer dia: 54%); em 30 dias +24,8% (base +8,3%). BTC, RSI abaixo de 30 → 54 ocorrências, +0,7% em 7 dias (base +1,6%). BTC, cruzamentos da média de 200 → retornos abaixo da base nos dois sentidos. ETH: os 4 resultados da média de 200 e o RSI abaixo de 30 em 30 dias sem amostra suficiente (5 de 8); SOL: só RSI>70 em 7 dias passou (24 ocorrências, +5,8% contra +0,5%).
 - **Não verificado:** significância estatística (não calculada, de propósito); backtest rodando dentro da `daily_pipeline` no Airflow (a coleta segue bloqueada). Ainda não aparece na planilha nem no `--detalhes` (PR B).
 
+### Etapa 11 — Backtest dos sinais, PR B: `--detalhes` e aba `Backtest` (etapa 11 concluída)
+- Commits `74f1ebd`, `9cea7fb`.
+- `infra/repositories.py`: `load_backtests` (resultados + amostra mínima gravada). `Analysis` ganhou `backtests` e `backtest_min_sample`; `build_analysis` os preenche. `core/explainer.py`: seção do backtest no `--detalhes` (nome do sinal em linguagem simples, ocorrências, média/mediana/taxa ao lado de "qualquer dia", "amostra pequena demais para concluir (N vezes; mínimo 20)", e "não é previsão"). `reports/frames.py`: `backtest_frame` e nota na aba Sobre; `reports/excel.py`: aba `Backtest` (formatos de %, data e inteiro, verde/vermelho nos retornos, Ativo e Sinal congelados).
+- 8 testes novos (total 306): texto com os números à mão, amostra pequena sem média, nenhum "compre/venda/vai subir" em todas as combinações, `build_analysis` com o backtest gravado, aba com os 2 casos (vazio só onde a amostra é pequena, contagem e base sempre presentes), nota da aba Sobre.
+- **Execução real (dados até 2026-10-28):** `analisar SOL --detalhes` mostra o backtest (ex.: RSI acima de 70, 7 dias: média +5,8% contra +0,5% de qualquer dia, **mediana +1,6%**, subiu em 54,2% contra 47,8%; os outros 7 resultados da SOL como "amostra pequena"). `planilha` gerou o arquivo com a aba `Backtest` (24 linhas, 14 colunas, conferida com openpyxl; números iguais aos do banco).
+- **Não verificado:** a aparência da aba num Excel de verdade (sem Excel/LibreOffice na máquina).
+- **Etapa 11 concluída** (PR #21 e este).
+
 ## Pendências abertas
 - Decidir se a "variação de 24h" passa a usar os candles de 1h quando eles estiverem sendo coletados.
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
