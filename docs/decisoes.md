@@ -140,6 +140,19 @@ Formato: decisão, motivo e alternativa descartada.
 - **Retries: 3, começando em 5 min, `retry_exponential_backoff=2.0`** — na 3.4 esse parâmetro é um multiplicador (era `True/False` no Airflow 2); 2.0 dá 5, 10 e 20 min, o suficiente para uma instabilidade curta da API.
 - **30 dias por coleta** — cobre dias em que a coleta falhou sem precisar de backfill. A bronze guarda cada resposta como um evento imutável (repetir a DAG acrescenta uma resposta); quem não pode duplicar é a silver, que já deduplica por ativo + timestamp.
 
+## Airflow: DAGs completas (etapa 10)
+
+- **Alerta de regime na `daily_pipeline`, não no `intraday_refresh`** (decisão do autor, 2026-11-17) — o regime vem do candle diário e só muda após 5 dias seguidos; recalculá-lo a cada hora repetiria o mesmo valor, e usar o candle do dia em andamento seria fingir precisão.
+- **O que é "mudança nova"** — antes de recalcular, o `process_gold` lê o último dia que o gold já tinha; só trocas posteriores a ele viram alerta. Reexecutar o mesmo dia não repete a mensagem; depois de dias sem coleta, todas as trocas do período chegam; a primeira carga (gold vazio) não alerta o histórico inteiro. Alternativa descartada: tabela de "alertas enviados" (mais uma tabela para o mesmo resultado).
+- **Mapeamento por ativo só na coleta e na silver** — o gold precisa do BTC para a correlação e leva ~1 s para os 3 ativos, então é uma tarefa só. Cada etapa mapeada espera todas as instâncias da anterior, o que garante que o gold veja a silver do BTC atualizada.
+- **`max_active_tis_per_dagrun=1` na coleta** — as 3 coletas rodam uma por vez (limite de 1 req/s da API); a silver, que só usa o banco, roda em paralelo.
+- **Lista de ativos numa tarefa (`list_symbols`)** — o YAML é lido na execução, não a cada leitura do arquivo pelo dag-processor; é isso que torna o mapeamento "dinâmico".
+- **Alerta numa tarefa separada do gold** — se o Telegram falhar, o retry não recalcula o gold. O gold devolve só textos (XCom pequeno), nunca DataFrames.
+- **Callback de falha em `interfaces/airflow_callbacks.py`, sem importar o Airflow** — recebe o contexto como dicionário, então é testável sem o Airflow. Nunca levanta exceção (um erro no callback só aparece no log do dag-processor e esconderia a falha original).
+- **Telegram com `httpx` direto (só `sendMessage`)** — já é dependência; o `python-telegram-bot` entra na etapa 12, para o bot. O token faz parte da URL, então os erros são reescritos sem a mensagem original do httpx. Sem token, o alerta vai para o log.
+- **`bronze_ingestion` removida** — era o "primeiro contato" da etapa 9; a `daily_pipeline` faz a mesma coleta e mais.
+- **Airflow instalado no grupo `airflow` do `uv` (padrão junto com `dev`)** — o teste de integridade usa o `DagBag` de verdade, na mesma versão da imagem (3.4.0). O `conftest.py` aponta o `AIRFLOW_HOME` para uma pasta temporária: importar o Airflow cria `~/airflow` sozinho.
+
 ## Idioma
 
 - **Comentários e docstrings em português; nomes de código e commits em inglês** — o projeto é de estudo e os comentários servem de explicação para o autor; o inglês nos nomes e commits mantém o padrão do mercado e do portfólio.

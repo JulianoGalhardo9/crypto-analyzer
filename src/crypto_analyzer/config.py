@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str
+    # Vazios = Telegram desligado: os alertas vão só para o log.
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
 
 
 ASSETS_PATH = Path(__file__).parents[2] / "config" / "assets.yaml"

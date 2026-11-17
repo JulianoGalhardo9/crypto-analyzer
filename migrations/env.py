@@ -9,7 +9,8 @@ from crypto_analyzer.infra.tables import Base
 config = context.config
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # Sem isto o fileConfig desliga os loggers já criados (pipeline/, infra/) no mesmo processo.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 # O autogenerate compara estas tabelas com o banco para sugerir as migrations.
 target_metadata = Base.metadata

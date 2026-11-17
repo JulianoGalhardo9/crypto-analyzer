@@ -199,8 +199,8 @@ Objetivo duplo: **entregar a automação** e **dar ao autor contato real com Air
 
 ### DAGs planejadas
 
-1. **`daily_pipeline`** (diária): bronze → silver → qualidade → gold. Usar **dynamic task mapping** (`.expand()`) para processar cada ativo em paralelo. Retries com backoff
-2. **`intraday_refresh`** (frequente, ex.: a cada poucos minutos): uma task de decisão (`short_circuit` ou `branch`) lê o regime atual de cada ativo e decide se já é hora de atualizar os dados recentes, conforme as frequências definidas em `config/regimes.yaml`. Se atualizou, recalcula o regime e **alerta no Telegram quando o regime mudou** (com histerese/confirmação mínima para não alertar repetidamente na fronteira)
+1. **`daily_pipeline`** (diária): bronze → silver → qualidade → gold → **alerta no Telegram quando o regime confirmado mudou** (decidido em 2026-11-17: o regime vem do candle diário com histerese de 5 dias, então só pode mudar uma vez por dia). Usar **dynamic task mapping** (`.expand()`) para processar cada ativo em paralelo. Retries com backoff
+2. **`intraday_refresh`** (decidido em 2026-11-17: **roda de hora em hora, aos 5 minutos**): uma task de decisão (`short_circuit` ou `branch`) lê o regime atual de cada ativo e decide se já é hora de atualizar os candles de 1h, conforme as frequências em `config/regimes.yaml` (alta = 1h, normal = 3h, calma = 6h). Não alerta mudança de regime (isso é da `daily_pipeline`)
 3. **`daily_report`**: gera a planilha Excel após o gold estar pronto (dependência entre DAGs via agendamento orientado a dados, "Assets"/"Datasets" conforme o nome na versão usada) e opcionalmente envia ao Telegram
 4. **Falhas:** callback de falha que avisa no Telegram
 
@@ -256,7 +256,7 @@ Resolver na etapa indicada, registrar a decisão aqui e **perguntar ao autor ant
 - **Decidido (2026-11-03, delegado ao Claude): "últimas 24h" = variação do último dia fechado** (fechamento contra o fechamento anterior), com a data na resposta. Sem candles horários coletados não existe janela móvel de 24h de verdade; escrever "24h" seria fingir precisão. Pode mudar quando os candles horários entrarem (etapa 10)
 - **Decidido (2026-10-29, delegado ao Claude, medido nos dados reais): percentil em janela móvel de 365 dias** (mínimo de 180 valores), volatilidade realizada de 30 dias, cortes 33/66 e **histerese de 5 dias** (ver `docs/decisoes.md`). O percentil crescente inclinava tudo para "calma" (SOL 57%)
 - **Amostra mínima do backtest:** quantas ocorrências independentes? (etapa 11)
-- **Frequência do `intraday_refresh`:** compatível com o rate limit da API e com a resolução horária (etapa 10)
+- **Decidido (2026-11-17): frequência do `intraday_refresh`** = checagem de hora em hora (aos 5 min, logo após o candle de 1h fechar); cada ativo atualiza a cada 1h (alta), 3h (normal) ou 6h (calma). O limite da API (1 req/s) não é gargalo: são 3 requisições por atualização
 - **Decidido (2026-11-03): limite de "dado velho"** reaproveita `max_age_hours` de `config/quality.yaml` (48 h para candles diários)
 
 ## Segurança e configuração
@@ -316,7 +316,8 @@ docker compose up -d                      # subir o Postgres do projeto
 docker compose --profile airflow up -d    # subir também o Airflow (http://localhost:8080, airflow/airflow)
 docker compose --profile airflow build    # reconstruir a imagem do Airflow (após mudar dependências)
 docker compose exec airflow-scheduler airflow dags list-import-errors
-docker compose exec airflow-scheduler airflow dags test bronze_ingestion   # roda a DAG uma vez
+docker compose exec airflow-scheduler airflow dags test daily_pipeline   # roda a DAG uma vez
+uv run pytest tests/dags                  # integridade das DAGs (Airflow instalado no grupo "airflow")
 docker compose --profile airflow stop     # parar o Airflow (mantém os dados)
 uv run alembic upgrade head               # migrations
 uv run pytest                             # testes
@@ -347,7 +348,7 @@ Cada etapa termina com algo funcionando e testado. A lógica nasce como Python c
 7. **Explainer + CLI:** resposta simples por padrão e `--detalhes`
 8. **Planilha Excel:** `frames.py` + `excel.py`, comando `planilha`, testes lendo o `.xlsx` gerado
 9. **Airflow, primeiro contato:** subir o ambiente via Docker Compose e criar uma DAG simples de ingestão que chama `pipeline/bronze.py`
-10. **DAGs completas:** `daily_pipeline` (task mapping por ativo), `intraday_refresh` (decisão por regime + alerta de mudança), `daily_report`, callbacks de falha, teste de integridade das DAGs
+10. **DAGs completas:** `daily_pipeline` (task mapping por ativo + alerta de mudança de regime), `intraday_refresh` (decisão por regime), `daily_report`, callbacks de falha, teste de integridade das DAGs
 11. **Backtest dos sinais:** validação do que os indicadores realmente indicaram nos dados; incluir na planilha
 12. **Bot de Telegram:** `/analisar sol` e `/planilha`
 13. **Opcional:** API FastAPI
