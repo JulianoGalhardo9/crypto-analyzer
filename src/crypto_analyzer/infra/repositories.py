@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from crypto_analyzer.config import AssetsConfig
-from crypto_analyzer.core.backtest import BacktestResult
+from crypto_analyzer.core.models import BacktestResult, Signal
 from crypto_analyzer.infra.tables import (
     Base,
     BronzeCandlesRaw,
@@ -269,3 +269,33 @@ def replace_backtests(
         )
         for r in results
     )
+
+
+def load_backtests(session: Session, symbol: str) -> tuple[list[BacktestResult], int | None]:
+    """Resultados do backtest do par (ordem dos sinais e horizontes) e a amostra mínima usada."""
+    rows = session.scalars(
+        select(FactBacktest).join(DimAtivo).where(DimAtivo.symbol == symbol)
+    ).all()
+    order = {signal: position for position, signal in enumerate(Signal)}
+    results = sorted(
+        (
+            BacktestResult(
+                signal=Signal(row.signal),
+                horizon_days=row.horizon_days,
+                raw_count=row.raw_count,
+                independent_count=row.independent_count,
+                evaluated_count=row.evaluated_count,
+                enough_sample=row.enough_sample,
+                mean_return=row.mean_return,
+                median_return=row.median_return,
+                hit_rate=row.hit_rate,
+                baseline_mean=row.baseline_mean,
+                baseline_hit_rate=row.baseline_hit_rate,
+                first_event=row.first_event,
+                last_event=row.last_event,
+            )
+            for row in rows
+        ),
+        key=lambda r: (order[r.signal], r.horizon_days),
+    )
+    return results, (rows[0].min_sample if rows else None)

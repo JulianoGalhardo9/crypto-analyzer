@@ -5,7 +5,15 @@ prever preço, e dizer quando falta histórico ou o dado está velho em vez de f
 """
 
 from crypto_analyzer.core.indicators import RSI_HIGH, RSI_LOW
-from crypto_analyzer.core.models import Analysis, CorrelationLevel, Regime, RegimeChange, Trend
+from crypto_analyzer.core.models import (
+    Analysis,
+    BacktestResult,
+    CorrelationLevel,
+    Regime,
+    RegimeChange,
+    Signal,
+    Trend,
+)
 
 DISCLAIMER = "⚠️ Informativo, não é recomendação de investimento."
 
@@ -15,6 +23,14 @@ CORR_STRONG = 0.7
 CORR_MODERATE = 0.4
 
 LABEL_WIDTH = 16
+
+# Nome de cada sinal do backtest em linguagem simples (também usado na planilha).
+SIGNAL_NAMES = {
+    Signal.RSI_ABOVE_HIGH: f"RSI passou de {RSI_HIGH} (subiu rápido)",
+    Signal.RSI_BELOW_LOW: f"RSI caiu abaixo de {RSI_LOW} (caiu rápido)",
+    Signal.CROSS_ABOVE_SMA_200: "Preço cruzou para cima da média de 200 dias",
+    Signal.CROSS_BELOW_SMA_200: "Preço cruzou para baixo da média de 200 dias",
+}
 
 
 def explain(analysis: Analysis) -> str:
@@ -71,7 +87,7 @@ def explain_details(analysis: Analysis) -> str:
         f"  30 dias: {_money(a.support_30)} — {_money(a.resistance_30)}",
         f"  90 dias: {_money(a.support_90)} — {_money(a.resistance_90)}",
         "",
-        "Backtest dos sinais: ainda não disponível.",
+        *_backtest_lines(a),
         "",
         DISCLAIMER,
     ]
@@ -255,6 +271,44 @@ def _regime_name(regime: Regime | None) -> str:
         Regime.HIGH: "alta",
         None: "sem histórico suficiente",
     }[regime]
+
+
+def _backtest_lines(a: Analysis) -> list[str]:
+    """O que aconteceu depois de cada sinal, sempre ao lado de "qualquer dia"."""
+    if not a.backtests:
+        return ["Backtest dos sinais: ainda não calculado (rode `crypto-analyzer calcular`)."]
+    lines = [
+        f"Backtest dos sinais (o que aconteceu depois, até {a.as_of:%d/%m/%Y}; "
+        "comparado com um dia qualquer)",
+    ]
+    by_signal: dict[Signal, list[BacktestResult]] = {}
+    for result in a.backtests:
+        by_signal.setdefault(result.signal, []).append(result)
+    for signal, results in by_signal.items():
+        first = results[0]
+        lines.append(
+            f"  {SIGNAL_NAMES[signal]}: {first.independent_count} vezes "
+            f"({first.raw_count} dias com o sinal)"
+        )
+        lines.extend(f"    {_backtest_outcome(r, a.backtest_min_sample)}" for r in results)
+    lines.append("  Isto descreve o passado; não é previsão do que vai acontecer.")
+    return lines
+
+
+def _backtest_outcome(r: BacktestResult, min_sample: int | None) -> str:
+    head = f"{r.horizon_days} dias depois:"
+    if not r.enough_sample:
+        minimum = f"; mínimo {min_sample}" if min_sample is not None else ""
+        return (
+            f"{head} amostra pequena demais para concluir "
+            f"({r.evaluated_count} vezes com resultado{minimum})"
+        )
+    return (
+        f"{head} média {_pct(r.mean_return)} (qualquer dia: {_pct(r.baseline_mean)}), "
+        f"mediana {_pct(r.median_return)}, subiu em {_pct(r.hit_rate, signed=False)} "
+        f"das vezes (qualquer dia: {_pct(r.baseline_hit_rate, signed=False)}); "
+        f"{r.evaluated_count} vezes"
+    )
 
 
 def _correlation_numbers(a: Analysis) -> str:

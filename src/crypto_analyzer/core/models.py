@@ -36,6 +36,34 @@ class CorrelationLevel(StrEnum):
     ABOVE_USUAL = "above"
 
 
+class Signal(StrEnum):
+    """Sinais avaliados (decisão do autor, 2026-11-17): os que estão por trás da resposta."""
+
+    RSI_ABOVE_HIGH = "rsi_above_70"
+    RSI_BELOW_LOW = "rsi_below_30"
+    CROSS_ABOVE_SMA_200 = "cross_above_sma_200"
+    CROSS_BELOW_SMA_200 = "cross_below_sma_200"
+
+
+@dataclass(frozen=True)
+class BacktestResult:
+    signal: Signal
+    horizon_days: int
+    raw_count: int  # dias com o sinal, contando os sobrepostos
+    independent_count: int  # ocorrências independentes
+    evaluated_count: int  # independentes com o preço do fim do horizonte disponível
+    enough_sample: bool
+    # Só preenchidos com amostra suficiente:
+    mean_return: float | None
+    median_return: float | None
+    hit_rate: float | None  # fração das ocorrências em que o preço subiu
+    # Linha de base: qualquer dia com o mesmo horizonte.
+    baseline_mean: float | None
+    baseline_hit_rate: float | None
+    first_event: datetime | None
+    last_event: datetime | None
+
+
 @dataclass(frozen=True)
 class Analysis:
     """Todos os números de um ativo num dia. `None` = ainda sem dados suficientes."""
@@ -78,3 +106,6 @@ class Analysis:
     resistance_30: float | None
     support_90: float | None
     resistance_90: float | None
+    # Backtest dos sinais (vazio se ainda não calculado) e a amostra mínima usada no cálculo.
+    backtests: tuple[BacktestResult, ...] = ()
+    backtest_min_sample: int | None = None

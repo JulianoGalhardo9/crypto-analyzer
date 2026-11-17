@@ -4,13 +4,13 @@ import pytest
 
 from crypto_analyzer.config import load_backtest_config
 from crypto_analyzer.core.backtest import (
-    Signal,
     evaluate,
     forward_returns,
     independent_events,
     run_backtest,
     signal_events,
 )
+from crypto_analyzer.core.models import Signal
 
 
 def daily(values: list[float], start: str = "2026-01-01") -> pd.Series:
