@@ -258,6 +258,15 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - **Não verificado:** o caminho "nada a fazer" do short-circuit dentro do Airflow (exigiria uma coleta de 1h real; não gravei dado falso no banco do projeto); coleta real de 1h (403). **Nada ainda usa os candles de 1h** nas respostas: a "variação de 24h" continua sendo o último dia fechado (decisão de 2026-11-03), e trocá-la é uma decisão do autor para quando houver dados de 1h.
 - **Etapa 10 concluída** (PRs #18, #19 e #20).
 
+### Etapa 11 — Backtest dos sinais, PR A: cálculo, tabela e execução real
+- Decisões do autor (2026-11-17), tomadas sobre a contagem real de ocorrências independentes: amostra mínima 20, sinais RSI 70/30 e cruzamento da média de 200 dias, horizontes 7 e 30 dias (`config/backtest.yaml`).
+- Commits `1222dc1`, `0cbeb60`.
+- `core/backtest.py` (puro): `signal_events`, `forward_returns` (dias de calendário), `independent_events`, `evaluate`, `run_backtest`. Migration `0004` (gerada, lida e aplicada no banco real): `fact_backtest` com chave (ativo, sinal, horizonte). `process_gold` calcula e substitui os resultados de cada ativo.
+- **Erro meu no teste, corrigido antes do commit:** o primeiro teste de "buraco nos candles" tinha expectativas erradas e comentários provisórios; refeito com a conta certa (01/01 + 2 dias cai num dia sem candle → vazio; 02/01 + 2 dias → 130/110 − 1).
+- 13 testes novos (total 299): sinais à mão (só o dia do cruzamento, média de 200 exigida nos dois dias, RSI desconhecido), retorno com buraco, agrupamento, amostra pequena sem média mas com linha de base, média/mediana/taxa à mão, eventos sem futuro, YAML; integração (16 linhas, iguais ao cálculo puro, repetir não duplica, horizonte removido some).
+- **Execução real (`calcular`, dados até 2026-10-28), lida do banco:** 24 resultados (3 ativos × 4 sinais × 2 horizontes); 12 com amostra suficiente (BTC 8 de 8, ETH 3 de 8, SOL 1 de 8). Exemplos: BTC, RSI acima de 70 → 84 ocorrências independentes, 7 dias depois média +6,1% (qualquer dia: +1,6%), subiu em 73% (qualquer dia: 54%); em 30 dias +24,8% (base +8,3%). BTC, RSI abaixo de 30 → 54 ocorrências, +0,7% em 7 dias (base +1,6%). BTC, cruzamentos da média de 200 → retornos abaixo da base nos dois sentidos. ETH: os 4 resultados da média de 200 e o RSI abaixo de 30 em 30 dias sem amostra suficiente (5 de 8); SOL: só RSI>70 em 7 dias passou (24 ocorrências, +5,8% contra +0,5%).
+- **Não verificado:** significância estatística (não calculada, de propósito); backtest rodando dentro da `daily_pipeline` no Airflow (a coleta segue bloqueada). Ainda não aparece na planilha nem no `--detalhes` (PR B).
+
 ## Pendências abertas
 - Decidir se a "variação de 24h" passa a usar os candles de 1h quando eles estiverem sendo coletados.
 - Etapa 2: persistir a bronze (SQLAlchemy + Alembic + tabela com JSONB) e coletar BTC, ETH e SOL.
