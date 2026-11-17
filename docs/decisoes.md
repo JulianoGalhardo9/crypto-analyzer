@@ -126,6 +126,20 @@ Formato: decisão, motivo e alternativa descartada.
 - **A planilha reaproveita `build_analysis`** — o `Resumo` usa exatamente a mesma análise do comando `analisar`, então os dois nunca discordam. O custo é ler os candles duas vezes do banco (poucos milhares de linhas, ~1 s no total).
 - **Frames puros, escrita separada** — `frames.py` monta DataFrames testáveis sem Excel; `excel.py` só formata e escreve.
 
+## Airflow
+
+- **Airflow 3.4.0 (estável mais recente em 2026-11-17, lançada em 06/11), imagem `python3.12`** — o CLAUDE.md pede a mais recente e a documentação dela foi lida antes (compose, TaskFlow, timetables, LocalExecutor, referência de configuração). Descartado: a 3.3.2, mais antiga sem motivo concreto.
+- **Compose a partir do oficial, enxugado** — LocalExecutor no lugar do Celery (sem Redis, worker e flower), sem triggerer (só serve para tarefas *deferrable*, que não usamos), sem exemplos carregados. Medido em repouso: ~825 MB para os 5 contêineres (api-server 267, scheduler 233, dag-processor 208, os dois Postgres 117). O oficial pede ≥ 4 GB para o Docker; aqui há 3,8 GiB e sobra folga.
+- **`AIRFLOW__CORE__PARALLELISM=4`** — a documentação do LocalExecutor diz que, no Linux (modo *fork*), ele abre `parallelism` processos de uma vez; o padrão (32) gasta memória à toa num projeto com no máximo 3 tarefas paralelas.
+- **Perfil `airflow` e arquivo próprio (`docker/airflow/compose.yaml`, incluído pelo `docker-compose.yml`)** — `docker compose up -d` continua subindo só o Postgres do projeto (testes e CLI não precisam do Airflow); `--profile airflow` sobe o resto. Descartado: tudo sempre ligado, gastando ~800 MB sem necessidade.
+- **Banco de metadados separado (`airflow-postgres`)** — exigência do CLAUDE.md: apagar ou recriar o Airflow nunca toca no histórico coletado.
+- **Imagem própria com o pacote instalado em modo editável em `/opt/crypto-analyzer`** — o `config.py` acha os YAMLs a partir do próprio arquivo; num `pip install` comum o código iria para `site-packages` e o caminho quebraria. Com `src/` e `config/` montados por cima, mudar o código não exige reconstruir a imagem. O `pip install` usa o arquivo de *constraints* do Airflow para não trocar versões das dependências dele. Descartado: `_PIP_ADDITIONAL_REQUIREMENTS` (a documentação desaconselha: reinstala a cada partida).
+- **SQLAlchemy `>=2.0.50,<2.1`** — o Airflow 3.4 fixa 2.0.55; o projeto pedia `>=2.1.6` sem usar nada da 2.1 (suíte inteira e mypy passaram na 2.0.55). Assim o ambiente local é igual ao do contêiner.
+- **DAG fina, imports dentro da tarefa** — o dag-processor relê o arquivo a cada 30 s; importar pandas/SQLAlchemy no topo deixaria cada leitura lenta. A lógica (`collect_candles`) é a mesma do `coletar`.
+- **Agendamento `15 0 * * *` (00:15 UTC)** — o candle diário fecha às 00:00 UTC. No Airflow 3 um cron usa por padrão o `CronTriggerTimetable`: a data lógica é o próprio horário agendado (`data_interval_start == data_interval_end`), diferente do Airflow 2, em que era o início do intervalo. `catchup=False` (já é o padrão na 3.x).
+- **Retries: 3, começando em 5 min, `retry_exponential_backoff=2.0`** — na 3.4 esse parâmetro é um multiplicador (era `True/False` no Airflow 2); 2.0 dá 5, 10 e 20 min, o suficiente para uma instabilidade curta da API.
+- **30 dias por coleta** — cobre dias em que a coleta falhou sem precisar de backfill. A bronze guarda cada resposta como um evento imutável (repetir a DAG acrescenta uma resposta); quem não pode duplicar é a silver, que já deduplica por ativo + timestamp.
+
 ## Idioma
 
 - **Comentários e docstrings em português; nomes de código e commits em inglês** — o projeto é de estudo e os comentários servem de explicação para o autor; o inglês nos nomes e commits mantém o padrão do mercado e do portfólio.

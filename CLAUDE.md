@@ -312,7 +312,12 @@ Resolver na etapa indicada, registrar a decisão aqui e **perguntar ao autor ant
 
 ```bash
 uv sync                                   # instalar dependências
-docker compose up -d                      # subir Postgres e Airflow
+docker compose up -d                      # subir o Postgres do projeto
+docker compose --profile airflow up -d    # subir também o Airflow (http://localhost:8080, airflow/airflow)
+docker compose --profile airflow build    # reconstruir a imagem do Airflow (após mudar dependências)
+docker compose exec airflow-scheduler airflow dags list-import-errors
+docker compose exec airflow-scheduler airflow dags test bronze_ingestion   # roda a DAG uma vez
+docker compose --profile airflow stop     # parar o Airflow (mantém os dados)
 uv run alembic upgrade head               # migrations
 uv run pytest                             # testes
 uv run ruff check . && uv run ruff format --check .
