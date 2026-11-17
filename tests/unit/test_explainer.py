@@ -8,9 +8,10 @@ from crypto_analyzer.core.explainer import (
     DISCLAIMER,
     explain,
     explain_details,
+    regime_change_message,
     unsupported_asset_message,
 )
-from crypto_analyzer.core.models import Analysis, CorrelationLevel, Regime, Trend
+from crypto_analyzer.core.models import Analysis, CorrelationLevel, Regime, RegimeChange, Trend
 
 
 def make_analysis(**overrides: object) -> Analysis:
@@ -221,3 +222,14 @@ def test_text_agrees_with_the_gender_of_each_asset() -> None:
         make_analysis(base="ETH", name="Ethereum", article="o")
     )
     assert "último ano da SOL" in explain_details(make_analysis())
+
+
+def test_regime_change_message_is_plain_and_has_the_disclaimer() -> None:
+    change = RegimeChange(datetime(2026, 11, 16, tzinfo=UTC), Regime.CALM, Regime.HIGH)
+
+    text = regime_change_message("SOL", "Solana", "a", change)
+
+    assert text.startswith("🔔 A SOL (Solana) mudou de agitação: calma → alta.")
+    assert "16/11/2026" in text
+    assert "não é recomendação de investimento" in text
+    assert not any(word in text.lower() for word in ("compre", "venda"))

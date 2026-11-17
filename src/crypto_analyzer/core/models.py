@@ -11,6 +11,15 @@ class Regime(StrEnum):
     HIGH = "high"
 
 
+@dataclass(frozen=True)
+class RegimeChange:
+    """Troca do regime confirmado (com histerese) de um ativo, no dia em que se confirmou."""
+
+    ts: datetime
+    previous: Regime
+    current: Regime
+
+
 class Trend(StrEnum):
     """Direção do preço nas últimas semanas, a partir das médias móveis."""
 

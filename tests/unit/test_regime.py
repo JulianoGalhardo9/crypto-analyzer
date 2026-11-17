@@ -1,13 +1,17 @@
+from datetime import UTC, datetime
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from crypto_analyzer.config import load_regime_config
+from crypto_analyzer.core.models import Regime, RegimeChange
 from crypto_analyzer.core.regime import (
     apply_hysteresis,
     classify,
     compute_regimes,
     realized_volatility,
+    regime_changes_after,
     volatility_percentile,
 )
 
@@ -173,3 +177,49 @@ def test_regimes_yaml_loads_with_sane_values() -> None:
     assert 0 < config.calm_below < config.high_above < 100
     assert config.min_history <= config.percentile_window
     assert config.confirm_days >= 1
+
+
+# --- mudanças para alertar ---
+
+
+def daily(values: list[str | None]) -> pd.Series:
+    index = pd.date_range("2026-11-01", periods=len(values), freq="D", tz="UTC")
+    return pd.Series(values, index=index, dtype="object")
+
+
+def test_only_changes_after_the_last_evaluated_day_are_new() -> None:
+    regimes = daily(["calm", "calm", "high", "high", "normal"])
+
+    changes = regime_changes_after(regimes, after=pd.Timestamp("2026-11-03", tz="UTC"))
+
+    # a troca de 03/11 já tinha sido avaliada; só a de 05/11 é novidade
+    assert changes == [RegimeChange(datetime(2026, 11, 5, tzinfo=UTC), Regime.HIGH, Regime.NORMAL)]
+
+
+def test_several_new_days_at_once_keep_every_change() -> None:
+    """Depois de dias sem coleta, várias trocas podem chegar juntas; nenhuma se perde."""
+    regimes = daily(["calm", "high", "high", "calm"])
+
+    changes = regime_changes_after(regimes, after=pd.Timestamp("2026-11-01", tz="UTC"))
+
+    assert [(c.previous, c.current) for c in changes] == [
+        (Regime.CALM, Regime.HIGH),
+        (Regime.HIGH, Regime.CALM),
+    ]
+
+
+def test_rerunning_the_same_day_finds_nothing_new() -> None:
+    regimes = daily(["calm", "high"])
+
+    assert regime_changes_after(regimes, after=regimes.index[-1]) == []
+
+
+def test_first_load_does_not_report_the_whole_history() -> None:
+    assert regime_changes_after(daily(["calm", "high", "normal"]), after=None) == []
+
+
+def test_days_without_enough_history_are_not_a_change() -> None:
+    """Sair de "sem histórico" (vazio) para um regime não é mudança de agitação."""
+    regimes = daily([None, None, "calm", "calm"])
+
+    assert regime_changes_after(regimes, after=pd.Timestamp("2026-10-01", tz="UTC")) == []

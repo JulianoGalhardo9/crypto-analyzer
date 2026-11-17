@@ -4,7 +4,7 @@ Regras (ver CLAUDE.md): sem jargão sem explicar, nunca mandar comprar ou vender
 prever preço, e dizer quando falta histórico ou o dado está velho em vez de fingir precisão.
 """
 
-from crypto_analyzer.core.models import Analysis, CorrelationLevel, Regime, Trend
+from crypto_analyzer.core.models import Analysis, CorrelationLevel, Regime, RegimeChange, Trend
 
 DISCLAIMER = "⚠️ Informativo, não é recomendação de investimento."
 
@@ -85,6 +85,18 @@ def unsupported_asset_message() -> str:
 
 
 # --- partes da resposta simples ---
+
+
+def regime_change_message(base: str, name: str, article: str, change: RegimeChange) -> str:
+    """Alerta curto de mudança de agitação (Telegram)."""
+    the = f"{article.upper()} {base}"
+    return (
+        f"🔔 {the} ({name}) mudou de agitação: "
+        f"{_regime_name(change.previous)} → {_regime_name(change.current)}.\n"
+        f"Confirmado em {change.ts:%d/%m/%Y} (dia em UTC), depois de vários dias seguidos "
+        "no novo nível, para não alertar por oscilações passageiras.\n\n"
+        f"{DISCLAIMER}"
+    )
 
 
 def _headline(a: Analysis) -> str:

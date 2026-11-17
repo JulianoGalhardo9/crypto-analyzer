@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from crypto_analyzer.core.indicators import log_returns
-from crypto_analyzer.core.models import Regime
+from crypto_analyzer.core.models import Regime, RegimeChange
 
 
 def realized_volatility(close: pd.Series, window: int = 30) -> pd.Series:
@@ -101,3 +101,20 @@ def compute_regimes(
             "regime": apply_hysteresis(raw, confirm_days),
         }
     )
+
+
+def regime_changes_after(regimes: pd.Series, after: pd.Timestamp | None) -> list[RegimeChange]:
+    """Trocas do regime confirmado em datas posteriores a `after`, em ordem.
+
+    `after` é o último dia que já tinha sido avaliado (e alertado) antes; sem ele, nada é
+    novidade: na primeira carga todo o histórico apareceria como "mudança".
+    """
+    if after is None:
+        return []
+    confirmed = regimes.dropna()
+    previous = confirmed.shift(1)
+    changed = confirmed[(confirmed != previous) & previous.notna() & (confirmed.index > after)]
+    return [
+        RegimeChange(ts=pd.Timestamp(ts).to_pydatetime(), previous=Regime(old), current=Regime(new))
+        for ts, old, new in zip(changed.index, previous[changed.index], changed, strict=True)
+    ]
