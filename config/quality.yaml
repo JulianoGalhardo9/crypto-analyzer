@@ -6,4 +6,6 @@ outlier_threshold: 10.0
 # Idade máxima do último candle antes de considerarmos a coleta atrasada.
 max_age_hours:
   1d: 48
-  1h: 3
+  # Maior que o intervalo mais longo do intraday_refresh (6 h em calma) + folga; com 3 h,
+  # todo ativo calmo apareceria como "atrasado" entre duas atualizações normais.
+  1h: 8

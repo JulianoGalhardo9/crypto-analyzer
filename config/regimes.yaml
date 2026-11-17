@@ -10,3 +10,10 @@ calm_below: 33
 high_above: 66
 # O regime só muda depois de N dias seguidos no regime novo (evita alertas na fronteira).
 confirm_days: 5
+# Atualização dos candles de 1h (DAG intraday_refresh, que checa de hora em hora): de quantas
+# em quantas horas cada ativo é atualizado, conforme o regime confirmado dele (decisão do autor,
+# 2026-11-17). Sem regime conhecido (histórico curto), vale o intervalo de "high".
+refresh_hours:
+  calm: 6
+  normal: 3
+  high: 1

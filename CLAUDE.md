@@ -316,7 +316,7 @@ docker compose up -d                      # subir o Postgres do projeto
 docker compose --profile airflow up -d    # subir também o Airflow (http://localhost:8080, airflow/airflow)
 docker compose --profile airflow build    # reconstruir a imagem do Airflow (após mudar dependências)
 docker compose exec airflow-scheduler airflow dags list-import-errors
-docker compose exec airflow-scheduler airflow dags test daily_pipeline   # roda a DAG uma vez
+docker compose exec airflow-scheduler airflow dags test daily_pipeline   # roda a DAG uma vez (também intraday_refresh, daily_report)
 uv run pytest tests/dags                  # integridade das DAGs (Airflow instalado no grupo "airflow")
 docker compose --profile airflow stop     # parar o Airflow (mantém os dados)
 uv run alembic upgrade head               # migrations

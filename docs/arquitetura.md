@@ -10,7 +10,8 @@ src/crypto_analyzer/
     models.py        # Regime, Trend, CorrelationLevel, Analysis
     explainer.py     # números -> texto simples (explain, explain_details)
     trend.py         # classify_trend
-    regime.py        # volatilidade realizada, percentil, classificação, histerese
+    regime.py        # volatilidade realizada, percentil, classificação, histerese, mudanças novas
+    refresh.py       # refresh_due: hora de atualizar os candles de 1h?
     indicators.py    # sma, ema, rsi, macd, true_range, atr, bollinger, log_returns, rolling_correlation
   pipeline/          # bronze -> silver -> gold, qualidade
     bronze.py        # ingest_candles: API -> bronze
@@ -22,6 +23,8 @@ src/crypto_analyzer/
     process.py       # process_silver: bronze -> silver + qualidade (orquestra)
     silver.py        # parse_payload, build_silver (puro, pandas)
     quality.py       # checagens de qualidade (puro, pandas)
+    intraday.py      # symbols_due_for_refresh e refresh_hourly (candles de 1h)
+    alerts.py        # regime_alert_messages (textos dos alertas de regime)
     market_data.py   # MarketDataClient (Protocol), RawCandles, MarketDataError
   reports/           # montagem e escrita da planilha
     frames.py        # um DataFrame por aba (puro)
@@ -41,6 +44,7 @@ tests/
   integration/       # banco real (Postgres do Docker); API sempre simulada
   dags/              # integridade das DAGs com DagBag (conftest aponta AIRFLOW_HOME para pasta temporária)
 dags/
+  intraday_refresh.py  # aos 5 min de cada hora: short-circuit decide quem atualiza (1h/3h/6h pelo regime) -> candles 1h
   daily_report.py  # roda após cada atualização do gold (Asset crypto_gold): gera o .xlsx em output/
   daily_pipeline.py  # 00:15 UTC: coleta (mapeada, 1 por vez) -> silver (mapeada) -> gold -> alerta de regime
 config/              # assets.yaml (com nomes e benchmark), quality.yaml, regimes.yaml, report.yaml
