@@ -249,14 +249,14 @@ Diário do que foi feito, em ordem cronológica. Cada entrada diz **o que**, **p
 - **Não verificado:** o evento emitido pela própria tarefa `gold` dentro de uma execução completa da `daily_pipeline` (a coleta continua bloqueada pelo 403).
 
 ### Etapa 10 — DAGs completas, PR C: candles de 1h e `intraday_refresh` (etapa 10 concluída)
-- Commits `0add34b`, `dd22122`, `3ee86e3`.
+- PR #20. Commits `0add34b`, `dd22122`, `3ee86e3`.
 - `config/regimes.yaml`: `refresh_hours` (calma 6, normal 3, alta 1; decisão do autor). `config/quality.yaml`: limite de dado velho de 1h de 3 h para 8 h. `core/refresh.py`: `refresh_due` (horas cheias; sem coleta = atualizar; sem regime = intervalo de alta). `infra/repositories.py`: `load_last_fetch`, `load_latest_regime`. `pipeline/intraday.py`: `symbols_due_for_refresh`, `refresh_hourly`.
 - **DAG `intraday_refresh`** (`5 * * * *`): `due_symbols` (`@task.short_circuit`, devolve a lista de ativos) → `refresh` mapeada, uma por vez. 1 retry, timeout de 10 min, callback de falha.
 - **Teste fraco corrigido antes do commit:** o teste "uma hora depois, só os agitados" passava esperando lista vazia, porque nos dados sintéticos os dois ativos estão em "normal". Agora ele força a SOL para "alta" no banco de teste e exige `["SOL-BRL"]`.
 - 17 testes novos (total 287): `refresh_due` à mão (cada regime, fronteira de hora cheia, sem coleta, sem regime, fuso, data sem fuso, YAML com os 3 regimes), integração (ninguém coletado = todos; coletado nesta hora = ninguém; 1 h depois = só o em alta; intervalo mais longo = todos; atualização grava 3 candles de 1h na silver sem duplicar e sem marcar parcial), integridade da DAG (cron, short-circuit, uma coleta por vez).
 - **Verificado no Airflow (2026-11-17):** as 3 DAGs sem erros de importação. `airflow dags test intraday_refresh`: a decisão leu os dados reais (BTC, ETH e SOL em calma, nenhuma coleta de 1h ainda) e marcou os 3; `refresh` expandiu em 3 instâncias em sequência, que falharam com **HTTP 403**. Encerrei o processo **antes** de corrigir o estado para `failed` (assim ele não sobrescreveu com `success`).
 - **Não verificado:** o caminho "nada a fazer" do short-circuit dentro do Airflow (exigiria uma coleta de 1h real; não gravei dado falso no banco do projeto); coleta real de 1h (403). **Nada ainda usa os candles de 1h** nas respostas: a "variação de 24h" continua sendo o último dia fechado (decisão de 2026-11-03), e trocá-la é uma decisão do autor para quando houver dados de 1h.
-- **Etapa 10 concluída** (PRs #18, #19 e este).
+- **Etapa 10 concluída** (PRs #18, #19 e #20).
 
 ## Pendências abertas
 - Decidir se a "variação de 24h" passa a usar os candles de 1h quando eles estiverem sendo coletados.
