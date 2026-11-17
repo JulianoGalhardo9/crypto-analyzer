@@ -214,3 +214,23 @@ def load_last_gold_ts(session: Session, symbol: str) -> datetime | None:
     return session.scalar(
         select(func.max(FactRegime.ts)).join(DimAtivo).where(DimAtivo.symbol == symbol)
     )
+
+
+def load_last_fetch(session: Session, symbol: str, resolution: str) -> datetime | None:
+    """Quando a API respondeu pela última vez para o par nesta resolução (bronze)."""
+    return session.scalar(
+        select(func.max(BronzeCandlesRaw.fetched_at)).where(
+            BronzeCandlesRaw.symbol == symbol, BronzeCandlesRaw.resolution == resolution
+        )
+    )
+
+
+def load_latest_regime(session: Session, symbol: str) -> str | None:
+    """Regime confirmado (com histerese) do dia mais recente que tem um, ou None."""
+    return session.scalar(
+        select(FactRegime.regime)
+        .join(DimAtivo)
+        .where(DimAtivo.symbol == symbol, FactRegime.regime.is_not(None))
+        .order_by(FactRegime.ts.desc())
+        .limit(1)
+    )
