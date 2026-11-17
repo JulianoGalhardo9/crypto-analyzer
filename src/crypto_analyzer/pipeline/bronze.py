@@ -1,9 +1,11 @@
+import asyncio
 import logging
 from collections.abc import Sequence
 from datetime import datetime
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from crypto_analyzer.infra.mercado_bitcoin import MercadoBitcoinClient
 from crypto_analyzer.infra.repositories import save_raw_candles
 from crypto_analyzer.pipeline.market_data import MarketDataClient
 
@@ -33,3 +35,22 @@ async def ingest_candles(
             session.commit()
         logger.info("bronze: %s %s gravado (id=%d)", symbol, resolution, saved[symbol])
     return saved
+
+
+def collect_candles(
+    session_factory: sessionmaker[Session],
+    symbols: Sequence[str],
+    resolution: str,
+    *,
+    to: datetime,
+    countback: int,
+) -> dict[str, int]:
+    """`ingest_candles` com o cliente real da API, para quem não é async (CLI e Airflow)."""
+
+    async def run() -> dict[str, int]:
+        async with MercadoBitcoinClient() as client:
+            return await ingest_candles(
+                client, session_factory, symbols, resolution, to=to, countback=countback
+            )
+
+    return asyncio.run(run())
