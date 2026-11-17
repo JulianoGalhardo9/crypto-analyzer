@@ -207,3 +207,10 @@ def load_quality_issues(session: Session, resolution: str) -> list[QualityIssueR
             .order_by(QualityIssueRow.symbol, QualityIssueRow.id)
         )
     )
+
+
+def load_last_gold_ts(session: Session, symbol: str) -> datetime | None:
+    """Último dia que o gold (fact_regime) já tinha para o par, ou None se nunca foi calculado."""
+    return session.scalar(
+        select(func.max(FactRegime.ts)).join(DimAtivo).where(DimAtivo.symbol == symbol)
+    )
