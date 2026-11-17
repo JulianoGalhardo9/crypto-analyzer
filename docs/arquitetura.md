@@ -15,6 +15,7 @@ src/crypto_analyzer/
   pipeline/          # bronze -> silver -> gold, qualidade
     bronze.py        # ingest_candles: API -> bronze
     build_analysis.py  # build_analysis: banco -> Analysis
+    build_report.py  # build_report_data: banco -> ReportData (dados da planilha)
     analysis.py      # assemble_analysis: gold -> Analysis (puro)
     gold.py          # compute_indicators, compute_gold (puro, pandas)
     process_gold.py  # process_gold: silver -> gold (orquestra)
@@ -24,6 +25,7 @@ src/crypto_analyzer/
     market_data.py   # MarketDataClient (Protocol), RawCandles, MarketDataError
   reports/           # montagem e escrita da planilha
     frames.py        # um DataFrame por aba (puro)
+    excel.py         # write_report: escreve o .xlsx (formatos, cores, filtros, gráficos)
   infra/             # API do Mercado Bitcoin, banco, Telegram
     mercado_bitcoin.py  # cliente httpx async (implementa MarketDataClient)
     db.py            # engine e sessões SQLAlchemy
@@ -32,7 +34,7 @@ src/crypto_analyzer/
   interfaces/        # CLI, bot, API
     cli.py           # `crypto-analyzer coletar`, `processar`, `calcular` e `analisar`
 tests/
-  unit/              # test_package, test_mercado_bitcoin_client, test_silver, test_quality, test_indicators, test_regime, test_gold, test_explainer, test_analysis, test_trend_and_levels, test_cli, test_report_frames
+  unit/              # test_package, test_mercado_bitcoin_client, test_silver, test_quality, test_indicators, test_regime, test_gold, test_explainer, test_analysis, test_trend_and_levels, test_cli, test_report_frames, test_report_excel (report_data.py: dados sintéticos compartilhados)
   fixtures/          # respostas reais gravadas da API
   conftest.py        # backend asyncio para os testes async
   integration/       # banco real (Postgres do Docker); API sempre simulada

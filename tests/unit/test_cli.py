@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 from types import TracebackType
 
 import pytest
@@ -6,7 +7,9 @@ from typer.testing import CliRunner
 
 from crypto_analyzer.interfaces import cli
 from crypto_analyzer.interfaces.cli import app
+from crypto_analyzer.pipeline.build_analysis import NoDataError
 from crypto_analyzer.pipeline.market_data import MarketDataError
+from tests.unit.report_data import build_report_data
 
 runner = CliRunner()
 
@@ -59,3 +62,29 @@ def test_coletar_explains_a_failing_api_instead_of_dumping_a_traceback(
     assert "Não consegui coletar" in result.output
     assert "Tente de novo mais tarde" in result.output
     assert "Traceback" not in result.output
+
+
+def test_planilha_without_gold_explains_what_to_run(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    def no_data(*args: object) -> None:
+        raise NoDataError("ainda não há dados calculados de BTC")
+
+    monkeypatch.setattr(cli, "build_report_data", no_data)
+
+    result = runner.invoke(app, ["planilha", "--pasta", str(tmp_path)])
+
+    assert result.exit_code == 1
+    assert "coletar, processar e calcular" in result.output
+    assert not list(tmp_path.iterdir())  # nenhum arquivo pela metade
+
+
+def test_planilha_writes_the_dated_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(cli, "build_report_data", lambda *args: build_report_data())
+
+    result = runner.invoke(app, ["planilha", "--pasta", str(tmp_path)])
+
+    assert result.exit_code == 0
+    [report] = tmp_path.iterdir()
+    assert re.fullmatch(r"crypto_report_\d{4}-\d{2}-\d{2}\.xlsx", report.name)
+    assert report.name in result.output.replace("\n", "")

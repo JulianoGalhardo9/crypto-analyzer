@@ -121,6 +121,9 @@ Formato: decisão, motivo e alternativa descartada.
 - **Aba `Backtest` só na etapa 11** — não faria sentido uma aba vazia; o teste de abas a incluirá quando existir.
 - **Cabeçalhos e rótulos em português** — a planilha é para o usuário final, diferente do código.
 - **Valores vazios só onde fazem sentido** — correlação do BTC (é a referência) e datas de verificações que não têm data (ex.: duplicatas). Nenhum "—" em coluna numérica, que a transformaria em texto.
+- **Aba `Gráficos` separada** — os gráficos (preço com médias de 20/50/200 dias e volatilidade, um par por ativo) ficam numa aba própria em vez de flutuar sobre as tabelas, que continuam livres para filtrar e ordenar. Os gráficos leem os dados das abas `Indicadores` e `Regimes`, então não há cópia dos números.
+- **Cores por formatação condicional, não por célula** — o Excel recalcula a cor se o usuário editar ou filtrar; pintar célula a célula deixaria a cor "presa" ao valor antigo.
+- **A planilha reaproveita `build_analysis`** — o `Resumo` usa exatamente a mesma análise do comando `analisar`, então os dois nunca discordam. O custo é ler os candles duas vezes do banco (poucos milhares de linhas, ~1 s no total).
 - **Frames puros, escrita separada** — `frames.py` monta DataFrames testáveis sem Excel; `excel.py` só formata e escreve.
 
 ## Idioma

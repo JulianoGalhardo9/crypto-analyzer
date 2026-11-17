@@ -54,3 +54,8 @@ select = ["E", "F", "I", "UP", "B", "SIM", "PD"]
 python_version = "3.12"
 strict = true
 files = ["src"]
+
+# O XlsxWriter não publica tipos; sem isto o mypy (strict) recusaria a importação.
+[[tool.mypy.overrides]]
+module = ["xlsxwriter", "xlsxwriter.*"]
+ignore_missing_imports = true

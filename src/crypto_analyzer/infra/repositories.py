@@ -196,3 +196,14 @@ def replace_quality_issues(
         )
         for issue in issues
     )
+
+
+def load_quality_issues(session: Session, resolution: str) -> list[QualityIssueRow]:
+    """Problemas de qualidade gravados pelo último `processar`, de todos os pares."""
+    return list(
+        session.scalars(
+            select(QualityIssueRow)
+            .where(QualityIssueRow.resolution == resolution)
+            .order_by(QualityIssueRow.symbol, QualityIssueRow.id)
+        )
+    )
