@@ -88,9 +88,9 @@ def compute_gold(
     return {
         symbol: GoldFrames(
             indicators=compute_indicators(frame, benchmark_close if symbol != benchmark else None),
-            regimes=compute_regimes(frame["close"], **regime_config.model_dump()).rename(
-                columns={"percentile": "volatility_percentile"}
-            )[REGIME_COLUMNS],
+            regimes=compute_regimes(
+                frame["close"], **regime_config.model_dump(exclude={"refresh_hours"})
+            ).rename(columns={"percentile": "volatility_percentile"})[REGIME_COLUMNS],
         )
         for symbol, frame in candles.items()
     }

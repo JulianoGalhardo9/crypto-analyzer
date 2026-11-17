@@ -16,6 +16,7 @@ REGIME = RegimeConfig(
     calm_below=33,
     high_above=66,
     confirm_days=3,
+    refresh_hours={"calm": 6, "normal": 3, "high": 1},
 )
 NOW = datetime(2026, 10, 29, 12, tzinfo=UTC)
 DAYS = 500

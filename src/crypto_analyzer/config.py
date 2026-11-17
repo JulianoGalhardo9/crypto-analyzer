@@ -4,6 +4,8 @@ import yaml
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from crypto_analyzer.core.models import Regime
+
 
 class Settings(BaseSettings):
     """Configuração lida de variáveis de ambiente ou do arquivo `.env` (nunca commitado)."""
@@ -68,6 +70,7 @@ class RegimeConfig(BaseModel):
     calm_below: float
     high_above: float
     confirm_days: int
+    refresh_hours: dict[Regime, int]
 
 
 def load_regime_config(path: Path = REGIMES_PATH) -> RegimeConfig:
