@@ -22,7 +22,7 @@ def test_every_dag_imports_without_errors(dagbag: DagBag) -> None:
 
 
 def test_expected_dags_exist(dagbag: DagBag) -> None:
-    assert set(dagbag.dag_ids) == {"daily_pipeline", "daily_report"}
+    assert set(dagbag.dag_ids) == {"daily_pipeline", "daily_report", "intraday_refresh"}
 
 
 def test_every_task_retries_and_alerts_on_failure(dagbag: DagBag) -> None:
@@ -69,3 +69,15 @@ def test_report_runs_after_each_gold_update(dagbag: DagBag) -> None:
     timetable = dagbag.dags["daily_report"].timetable
     assert timetable.asset_triggered
     assert [asset.uri for asset in timetable.asset_condition.objects] == [GOLD_ASSET_URI]
+
+
+def test_intraday_refresh_checks_every_hour_and_short_circuits(dagbag: DagBag) -> None:
+    dag = dagbag.dags["intraday_refresh"]
+
+    assert dag.timetable.expression == "5 * * * *"
+    assert dag.catchup is False and dag.max_active_runs == 1
+    decision = dag.get_task("due_symbols")
+    # A decisão é um short-circuit: lista vazia pula a atualização.
+    assert "ShortCircuit" in type(decision).__name__
+    assert decision.downstream_task_ids == {"refresh"}
+    assert dag.get_task("refresh").max_active_tis_per_dagrun == 1
