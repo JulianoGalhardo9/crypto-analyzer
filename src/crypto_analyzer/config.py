@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     # Vazios = Telegram desligado: os alertas vão só para o log.
     telegram_bot_token: str = ""
     telegram_chat_id: str = ""
+    # Onde a planilha automática (DAG daily_report) é salva; no Docker aponta para output/.
+    output_dir: Path = Path("output")
 
 
 ASSETS_PATH = Path(__file__).parents[2] / "config" / "assets.yaml"

@@ -6,14 +6,15 @@ Fina de propósito: cada tarefa chama uma função de `crypto_analyzer` que tamb
 
 from datetime import UTC, datetime, timedelta
 
-from airflow.sdk import dag, task
+from airflow.sdk import Asset, dag, task
 
-from crypto_analyzer.interfaces.airflow_callbacks import notify_task_failure
+from crypto_analyzer.interfaces.airflow_callbacks import GOLD_ASSET_URI, notify_task_failure
 
 RESOLUTION = "1d"
 # Dias de candles pedidos em cada coleta: cobre dias em que a coleta falhou.
 # A bronze guarda a resposta inteira e a silver remove as repetições.
 COUNTBACK_DAYS = 30
+GOLD = Asset(name="crypto_gold", uri=GOLD_ASSET_URI)
 
 
 @dag(
@@ -71,7 +72,8 @@ def daily_pipeline() -> None:
         )
         return {"candles": summary.candles, "partial": summary.partial, **summary.issues_by_check}
 
-    @task
+    # Ao terminar com sucesso, registra um evento do Asset: é o que dispara a daily_report.
+    @task(outlets=[GOLD])
     def gold() -> list[str]:
         """Silver -> gold de todos os ativos juntos (a correlação precisa do BTC).
 
