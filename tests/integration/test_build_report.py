@@ -6,7 +6,12 @@ from openpyxl import load_workbook
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
-from crypto_analyzer.config import QualityConfig, ReportConfig, load_regime_config
+from crypto_analyzer.config import (
+    QualityConfig,
+    ReportConfig,
+    load_backtest_config,
+    load_regime_config,
+)
 from crypto_analyzer.infra.db import make_session_factory
 from crypto_analyzer.infra.repositories import replace_quality_issues
 from crypto_analyzer.pipeline.build_analysis import NoDataError
@@ -36,7 +41,7 @@ def prepare(engine: Engine, session: Session) -> None:
         session, "SOL-BRL", "1h", [QualityIssue("stale", "info", None, None, "horário")]
     )
     session.commit()
-    process_gold(make_session_factory(engine), ASSETS, load_regime_config())
+    process_gold(make_session_factory(engine), ASSETS, load_regime_config(), load_backtest_config())
 
 
 def test_report_data_is_read_from_the_database(engine: Engine, session: Session) -> None:

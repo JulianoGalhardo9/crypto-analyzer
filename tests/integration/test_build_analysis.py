@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
-from crypto_analyzer.config import QualityConfig, load_regime_config
+from crypto_analyzer.config import QualityConfig, load_backtest_config, load_regime_config
 from crypto_analyzer.core.explainer import explain
 from crypto_analyzer.core.models import Regime
 from crypto_analyzer.infra.db import make_session_factory
@@ -22,7 +22,7 @@ LAST_PARTIAL_DAY = datetime(2026, 10, 5, tzinfo=UTC)
 def prepare(engine: Engine, session: Session) -> None:
     seed_silver(session, "BTC-BRL", seed=1)
     seed_silver(session, "SOL-BRL", seed=2)
-    process_gold(make_session_factory(engine), ASSETS, load_regime_config())
+    process_gold(make_session_factory(engine), ASSETS, load_regime_config(), load_backtest_config())
 
 
 def test_analysis_is_built_from_the_database(engine: Engine, session: Session) -> None:

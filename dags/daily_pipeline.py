@@ -79,13 +79,15 @@ def daily_pipeline() -> None:
 
         Devolve os textos de alerta das mudanças de regime novas (pode ser lista vazia).
         """
-        from crypto_analyzer.config import load_assets, load_regime_config
+        from crypto_analyzer.config import load_assets, load_backtest_config, load_regime_config
         from crypto_analyzer.infra.db import session_factory_from_settings
         from crypto_analyzer.pipeline.alerts import regime_alert_messages
         from crypto_analyzer.pipeline.process_gold import process_gold
 
         assets = load_assets()
-        summaries = process_gold(session_factory_from_settings(), assets, load_regime_config())
+        summaries = process_gold(
+            session_factory_from_settings(), assets, load_regime_config(), load_backtest_config()
+        )
         return regime_alert_messages(summaries, assets)
 
     @task

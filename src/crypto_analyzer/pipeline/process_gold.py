@@ -5,12 +5,14 @@ from datetime import datetime
 import pandas as pd
 from sqlalchemy.orm import Session, sessionmaker
 
-from crypto_analyzer.config import AssetsConfig, RegimeConfig
+from crypto_analyzer.config import AssetsConfig, BacktestConfig, RegimeConfig
+from crypto_analyzer.core.backtest import run_backtest
 from crypto_analyzer.core.models import RegimeChange
 from crypto_analyzer.core.regime import regime_changes_after
 from crypto_analyzer.infra.repositories import (
     load_closed_candles,
     load_last_gold_ts,
+    replace_backtests,
     upsert_ativos,
     upsert_gold,
 )
@@ -33,9 +35,10 @@ def process_gold(
     session_factory: sessionmaker[Session],
     assets: AssetsConfig,
     regime_config: RegimeConfig,
+    backtest_config: BacktestConfig,
     resolution: str = "1d",
 ) -> list[GoldSummary]:
-    """Silver (candles fechados) -> gold (indicadores e regimes), idempotente.
+    """Silver (candles fechados) -> gold (indicadores, regimes e backtest), idempotente.
 
     Calcula tudo em memória (o BTC é necessário para a correlação dos outros) e grava
     em uma transação; reexecutar atualiza as mesmas linhas em vez de duplicar.
@@ -53,6 +56,21 @@ def process_gold(
         ids = upsert_ativos(session, assets)
         for symbol, frames in gold.items():
             upsert_gold(session, ids[symbol], frames)
+            close = candles[symbol]["close"]
+            backtests = run_backtest(
+                close,
+                frames.indicators["rsi_14"],
+                frames.indicators["sma_200"],
+                backtest_config.horizons_days,
+                backtest_config.min_sample,
+            )
+            replace_backtests(
+                session,
+                ids[symbol],
+                backtests,
+                close.index.max().to_pydatetime(),
+                backtest_config.min_sample,
+            )
         session.commit()
 
     summaries = []

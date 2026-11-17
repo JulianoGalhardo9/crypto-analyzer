@@ -7,6 +7,7 @@ import typer
 
 from crypto_analyzer.config import (
     load_assets,
+    load_backtest_config,
     load_quality_config,
     load_regime_config,
     load_report_config,
@@ -94,7 +95,9 @@ def calcular() -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     session_factory = session_factory_from_settings()
     try:
-        summaries = process_gold(session_factory, load_assets(), load_regime_config())
+        summaries = process_gold(
+            session_factory, load_assets(), load_regime_config(), load_backtest_config()
+        )
     except ValueError as error:
         raise typer.BadParameter(str(error)) from error
     for summary in summaries:
